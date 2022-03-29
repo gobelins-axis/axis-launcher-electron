@@ -1,0 +1,40 @@
+{
+  "name": "arcade-launcher",
+  "version": "1.0.0",
+  "description": "Application that starts games",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arcade-feu/arcade-launcher.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arcade-feu/arcade-launcher/issues"
+  },
+  "homepage": "https://github.com/arcade-feu/arcade-launcher#readme",
+  "devDependencies": {
+    "@babel/core": "^7.17.8",
+    "@babel/eslint-parser": "^7.17.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.7",
+    "@babel/preset-env": "^7.16.11",
+    "dotenv": "^16.0.0",
+    "electron": "^17.1.0",
+    "electron-reloader": "^1.2.3",
+    "eslint": "^8.12.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-n": "^15.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "path": "^0.12.7",
+    "serialport": "^10.3.0",
+    "@serialport/parser-readline": "^10.3.0"
+  },
+  "dependencies": {
+    "arcade-api": "github:arcade-feu/arcade-api"
+  }
+}
