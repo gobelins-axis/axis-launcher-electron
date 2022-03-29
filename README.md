@@ -1,4 +1,4 @@
-# Arcade Launcher
+# 🚀 Arcade Launcher
 
 Electron Application to lauch games on our Arcade Machine, the application is also handling the communication between our controllers and the game.
 
@@ -38,3 +38,9 @@ If you cant find the FQBN, try to find it online by Arduino model / version...
 ```bash
 npm run build
 ```
+
+## Authors
+
+[@LPGeneret](https://twitter.com/LPGeneret)
+[@sergebocancea](https://twitter.com/sergebocancea)
+[@leochocolat](https://twitter.com/leochocolat)
