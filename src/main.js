@@ -1,30 +1,68 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, BrowserView } = require('electron');
 const { SerialPort } = require('serialport');
 const { ipcMain } = require('electron');
 require('dotenv').config();
 const { ReadlineParser } = require('@serialport/parser-readline');
 const path = require('path');
 
+try {
+    require('electron-reloader')(module);
+} catch (_) {
+}
+
 const createWindow = () => {
     const win = new BrowserWindow({
-        width: 1200,
-        height: 900,
+        width: 1500,
+        height: 1200,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: false,
-            enableRemoteModule: true,
         },
+        acceptFirstMouse: true,
     });
-
-    win.loadURL('https://arcade-demo-game.netlify.app');
-
-    win.webContents.openDevTools();
+    win.loadFile('../arcade-launcher-client/index.html');
 
     win.once('ready-to-show', () => {
         win.show();
     });
 
-    return win;
+    const size = win.getSize();
+    const firstView = new BrowserView({
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: false,
+            enableRemoteModule: true,
+        },
+    }
+    );
+    firstView.setBounds({ x: 0, y: 0, width: 800, height: 600 });
+    firstView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true,
+    });
+
+
+
+    // SPACE VOYAGE
+    ipcMain.on('voyageGame', (event) => {
+        win.loadURL('https://space-voyage.mariusballot.com/');
+    });
+
+    // JAHNERATION
+    ipcMain.on('jahGame', (event) => {
+        console.log('clicked')
+        win.loadURL('https://game.jahneration.com/');
+    });
+
+    // BACK TO HOME
+    ipcMain.on('backToHome', (event) => {
+        win.loadFile('../arcade-launcher-client/index.html');
+    });
+
+    win.webContents.on('did-finish-load', function() {
+        console.log('finish load');
+    });
 };
 
 const createSerialPort = (win) => {
@@ -49,10 +87,24 @@ app.whenReady().then(() => {
     createSerialPort(win);
 });
 
+// Sur Windows, killer le process quand on ferme la fenêtre
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
 
+// Sur macOS, quand on ferme la fenêtre le processus reste dans le dock
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+
+ipcMain.on('colorClick', (event, data) => {
+    setLedColor(data);
+});
+
+// Interact with arduino
+const setLedColor = (color) => {
+    port.write(color, (err) => {
+        if (err) return console.log('Error on write: ', err.message);
+        console.log('message written');
+    });
+};
