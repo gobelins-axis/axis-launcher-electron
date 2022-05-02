@@ -23,15 +23,16 @@ Then run this command,
 arduino-cli board list
 ```
 
-and spot your arduino board port and FQBN (if detected) and add it to an environemnt file.
-It should look like this
+Spot your arduino board and store the FQBN (if detected) somewhere, you'll need it soon.
+If it's marked as Unknown, try to find it online by Arduino model / version or use this command :
 
-```env
-PORT=/dev/cu.usbserial-14310
-FQBN=arduino:avr:nano:cpu=atmega328old
+```bash
+arduino-cli board listall mkr
 ```
 
-If you cant find the FQBN, try to find it online by Arduino model / version...
+```env
+FQBN=arduino:avr:nano:cpu=atmega328old
+```
 
 ### Build
 
