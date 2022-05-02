@@ -15,21 +15,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const changeViewToVoyage = () => {
         ipcRenderer.sendSync('voyageGame');
-    }
+    };
 
     const changeViewToJah = () => {
         ipcRenderer.sendSync('jahGame');
-    }
+    };
 
     const backToHome = () => {
         ipcRenderer.sendSync('backToHome');
-    }
+    };
 
     window.addEventListener('keydown', (e) => {
-        if (e.key === "Escape") {
-            backToHome()
+        if (e.key === 'Escape') {
+            backToHome();
         }
-    })
+    });
 
     if (voyageGame) {
         voyageGame.addEventListener('click', () => {
@@ -42,5 +42,4 @@ window.addEventListener('DOMContentLoaded', () => {
             changeViewToJah();
         });
     }
-
 });

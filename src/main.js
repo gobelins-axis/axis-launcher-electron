@@ -4,6 +4,7 @@ const { ipcMain } = require('electron');
 require('dotenv').config();
 const { ReadlineParser } = require('@serialport/parser-readline');
 const path = require('path');
+const { exec } = require('child_process');
 
 try {
     require('electron-reloader')(module);
@@ -19,6 +20,7 @@ const createWindow = () => {
         },
         acceptFirstMouse: true,
     });
+
     win.loadFile('../arcade-launcher-client/index.html');
 
     win.once('ready-to-show', () => {
@@ -42,8 +44,6 @@ const createWindow = () => {
         vertical: true,
     });
 
-
-
     // SPACE VOYAGE
     ipcMain.on('voyageGame', (event) => {
         win.loadURL('https://space-voyage.mariusballot.com/');
@@ -51,7 +51,7 @@ const createWindow = () => {
 
     // JAHNERATION
     ipcMain.on('jahGame', (event) => {
-        console.log('clicked')
+        console.log('clicked');
         win.loadURL('https://game.jahneration.com/');
     });
 
@@ -65,8 +65,8 @@ const createWindow = () => {
     });
 };
 
-const createSerialPort = (win) => {
-    const port = new SerialPort({ path: process.env.PORT, baudRate: 9600 });
+const createSerialPort = (win, arduinoPort) => {
+    const port = new SerialPort({ path: arduinoPort, baudRate: 9600 });
     const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
     parser.on('data', (data) => {
@@ -83,9 +83,52 @@ const createSerialPort = (win) => {
 };
 
 app.whenReady().then(() => {
-    const win = createWindow();
-    createSerialPort(win);
+    getBoardList().then((response) => {
+        const arduinoPort = getArduinoPort(response);
+
+        if (!arduinoPort) {
+            console.error('❌ Couldnt find any arduino board connected through USB');
+            return;
+        }
+
+        console.log(`✅ Board founded on port ${arduinoPort}!\n`);
+
+        const win = createWindow();
+        createSerialPort(win, arduinoPort);
+    });
 });
+
+// Get Board list
+const getBoardList = () => {
+    // Find arduino port
+    const promise = new Promise((resolve, reject) => {
+        console.log('⏳ Getting board list...');
+        exec('arduino-cli board list', (error, stdout, stderr) => {
+            if (error) { reject(Error('❌ Something went wrong while getting board list')); }
+            resolve(stdout);
+        });
+    });
+
+    return promise;
+};
+
+const getArduinoPort = (boardList) => {
+    const lines = boardList.split('\n');
+
+    const ports = lines.filter((item) => {
+        return item.includes('Serial Port');
+    });
+
+    const usbPorts = ports.filter((item) => {
+        return item.includes('Serial Port (USB)');
+    });
+
+    if (usbPorts.length === 0) return;
+
+    const port = usbPorts[0].split(' ')[0];
+
+    return port;
+};
 
 // Sur Windows, killer le process quand on ferme la fenêtre
 app.on('window-all-closed', () => {
