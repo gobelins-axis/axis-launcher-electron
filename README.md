@@ -14,25 +14,7 @@ npm start
 
 ### Board communication
 
-You will need to install Arduino CLI - [Install](https://arduino.github.io/arduino-cli/0.20/installation/)
-
-Then run this command,
-
-```bash
-# Show devices connected to your computer
-arduino-cli board list
-```
-
-Spot your arduino board and store the FQBN (if detected) somewhere, you'll need it soon.
-If it's marked as Unknown, try to find it online by Arduino model / version or use this command :
-
-```bash
-arduino-cli board listall mkr
-```
-
-```env
-FQBN=arduino:avr:nano:cpu=atmega328old
-```
+On MacOS, If your board is connected to your computer the arduino port should be automatically detected to allow the communication.
 
 ### Build
 
