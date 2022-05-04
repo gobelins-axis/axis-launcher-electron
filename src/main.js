@@ -57,7 +57,7 @@ const createWindow = () => {
 
     // JAHNERATION
     ipcMain.on('jahGame', (event) => {
-        win.loadURL('https://game.jahneration.com/');
+        win.loadURL('https://leochocolat.github.io/jahnerationGame/dist/');
     });
 
     // BACK TO HOME
