@@ -18,6 +18,8 @@ const createWindow = () => {
         height: 1200,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: false,
+            enableRemoteModule: true,
         },
         acceptFirstMouse: true,
     });
@@ -64,6 +66,7 @@ const createWindow = () => {
     win.webContents.on('did-finish-load', function() {
         console.log('finish load');
     });
+    return win;
 };
 
 const createSerialPort = (win, arduinoPort) => {
@@ -112,14 +115,28 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-ipcMain.on('colorClick', (event, data) => {
-    setLedColor(data);
-});
 
-// Interact with arduino
-const setLedColor = (color) => {
-    port.write(color, (err) => {
-        if (err) return console.log('Error on write: ', err.message);
-        console.log('message written');
-    });
-};
+// JOYSTICK
+const joystickNormalizedPosition = (x, y) => {
+    const newX = map(x, 0, 1023, -1, 1);
+    const newY = map(y, 0, 1023, -1, 1);
+    const distanceFromCenter = distance(newX, newY, 0);
+    if(distanceFromCenter < 0.02) {
+        return {
+            x: 0,
+            y: 0,
+        };
+    }
+    return {
+        x: newX,
+        y: newY,
+    };
+}
+
+const map = (axisValue, in_min, in_max, out_min, out_max) => {
+    return (axisValue - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  }
+
+const distance = (x, y, maxValue) => {  
+    return (Math.sqrt((maxValue - x) * (maxValue - x)) + (maxValue - y) * (maxValue - y));
+  }
