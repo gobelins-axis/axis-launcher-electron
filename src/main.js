@@ -71,13 +71,19 @@ const createSerialPort = (win, arduinoPort) => {
     const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
     parser.on('data', (data) => {
-        console.log(data);
-        if (data.localeCompare('first') === 0) {
-            win.webContents.send('keydown', 'a');
+        if (data.includes('buttonName:') && data.includes('buttonState:')) {
+            const buttonName = data.split('_')[0].split(':')[1];
+            const buttonState = data.split('_')[1].split(':')[1];
+            win.webContents.send(buttonState, buttonName);
         }
 
-        if (data.localeCompare('second') === 0) {
-            win.webContents.send('keydown', 'b');
+        if (data.includes('joystickId:1') || data.includes('joystickId:2')) {
+            const joystickId = parseInt(data.split('_')[0].split(':')[1]);
+            const joystickX = data.split('_')[1].split(':')[1];
+            const joystickY = data.split('_')[2].split(':')[1];
+
+            const normalizedPosition = joystickNormalizedPosition(joystickX, joystickY);
+            win.webContents.send('joystick:move', { joystickId, position: normalizedPosition });
         }
     });
 
