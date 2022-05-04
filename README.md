@@ -2,6 +2,28 @@
 
 Electron Application to lauch games on our Arcade Machine, the application is also handling the communication between our controllers and the game.
 
+## Dependencies
+
+-   Node.js - [Install](https://nodejs.org/en/download/)
+-   Arduino CLI - [Install](https://arduino.github.io/arduino-cli/0.20/installation/)
+
+## Installing
+
+### Create a configuration file
+
+```bash
+arduino-cli config init
+```
+
+### Connect the board to your PC
+
+```bash
+# Update the local cache of available platforms and libraries
+arduino-cli core update-index
+```
+
+On MacOS, If your board is connected to your computer the arduino port should be automatically detected.
+
 ## Development
 
 ```bash
@@ -12,11 +34,7 @@ npm install
 npm start
 ```
 
-### Board communication
-
-On MacOS, If your board is connected to your computer the arduino port should be automatically detected to allow the communication.
-
-### Build
+## Build
 
 ```bash
 npm run build
