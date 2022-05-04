@@ -24,7 +24,7 @@ const createWindow = () => {
         acceptFirstMouse: true,
     });
 
-    win.loadFile('index.html');
+    win.loadURL('https://arcade-launcher-client.netlify.app');
 
     win.once('ready-to-show', () => {
         win.show();
@@ -118,8 +118,8 @@ app.on('activate', () => {
 
 // JOYSTICK
 const joystickNormalizedPosition = (x, y) => {
-    const newX = map(x, 0, 1023, -1, 1);
-    const newY = map(y, 0, 1023, -1, 1);
+    const newX = map(x, 0, 1023, -1, 1) * -1;
+    const newY = map(y, 0, 1023, -1, 1) * -1;
     const distanceFromCenter = distance(newX, newY, 0);
     if(distanceFromCenter < 0.02) {
         return {
