@@ -47,12 +47,12 @@ const createWindow = () => {
 
     // SPACE VOYAGE
     ipcMain.on('voyageGame', (event) => {
-        win.loadURL('https://space-voyage.mariusballot.com/');
+        // win.loadURL('https://space-voyage.mariusballot.com/');
+        win.loadURL('https://space-voyage.surge.sh/');
     });
 
     // JAHNERATION
     ipcMain.on('jahGame', (event) => {
-        console.log('clicked');
         win.loadURL('https://game.jahneration.com/');
     });
 
