@@ -21,6 +21,7 @@
     "@babel/eslint-parser": "^7.17.0",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/preset-env": "^7.16.11",
+    "@serialport/parser-readline": "^10.3.0",
     "dotenv": "^16.0.0",
     "electron": "^17.1.0",
     "electron-reloader": "^1.2.3",
@@ -31,10 +32,10 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.0.0",
     "path": "^0.12.7",
-    "serialport": "^10.3.0",
-    "@serialport/parser-readline": "^10.3.0"
+    "serialport": "^10.3.0"
   },
   "dependencies": {
-    "arcade-api": "github:arcade-feu/arcade-api"
+    "arcade-api": "github:arcade-feu/arcade-api",
+    "utils": "github:arcade-feu/utils"
   }
 }

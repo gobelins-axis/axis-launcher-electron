@@ -5,6 +5,7 @@ require('dotenv').config();
 const { ReadlineParser } = require('@serialport/parser-readline');
 const path = require('path');
 const { exec } = require('child_process');
+const { getArduinoBoardPort } = require('utils');
 
 try {
     require('electron-reloader')(module);
@@ -21,7 +22,7 @@ const createWindow = () => {
         acceptFirstMouse: true,
     });
 
-    win.loadFile('../arcade-launcher-client/index.html');
+    win.loadFile('index.html');
 
     win.once('ready-to-show', () => {
         win.show();
@@ -70,6 +71,7 @@ const createSerialPort = (win, arduinoPort) => {
     const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
     parser.on('data', (data) => {
+        console.log(data);
         if (data.localeCompare('first') === 0) {
             win.webContents.send('keydown', 'a');
         }
@@ -83,52 +85,16 @@ const createSerialPort = (win, arduinoPort) => {
 };
 
 app.whenReady().then(() => {
-    getBoardList().then((response) => {
-        const arduinoPort = getArduinoPort(response);
-
-        if (!arduinoPort) {
-            console.error('❌ Couldnt find any arduino board connected through USB');
-            return;
-        }
-
-        console.log(`✅ Board founded on port ${arduinoPort}!\n`);
-
-        const win = createWindow();
-        createSerialPort(win, arduinoPort);
-    });
+    getArduinoBoardPort().then(
+        (arduinoPort) => {
+            const win = createWindow();
+            createSerialPort(win, arduinoPort);
+        },
+        (error) => {
+            console.log(error);
+        },
+    );
 });
-
-// Get Board list
-const getBoardList = () => {
-    // Find arduino port
-    const promise = new Promise((resolve, reject) => {
-        console.log('⏳ Getting board list...');
-        exec('arduino-cli board list', (error, stdout, stderr) => {
-            if (error) { reject(Error('❌ Something went wrong while getting board list')); }
-            resolve(stdout);
-        });
-    });
-
-    return promise;
-};
-
-const getArduinoPort = (boardList) => {
-    const lines = boardList.split('\n');
-
-    const ports = lines.filter((item) => {
-        return item.includes('Serial Port');
-    });
-
-    const usbPorts = ports.filter((item) => {
-        return item.includes('Serial Port (USB)');
-    });
-
-    if (usbPorts.length === 0) return;
-
-    const port = usbPorts[0].split(' ')[0];
-
-    return port;
-};
 
 // Sur Windows, killer le process quand on ferme la fenêtre
 app.on('window-all-closed', () => {
