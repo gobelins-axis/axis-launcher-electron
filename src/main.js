@@ -1,8 +1,8 @@
-const { app, BrowserWindow, BrowserView } = require('electron');
-const { SerialPort } = require('serialport');
-const { ipcMain } = require('electron');
+const {app, BrowserWindow, BrowserView} = require('electron');
+const {SerialPort} = require('serialport');
+const {ipcMain} = require('electron');
 require('dotenv').config();
-const { ReadlineParser } = require('@serialport/parser-readline');
+const {ReadlineParser} = require('@serialport/parser-readline');
 const path = require('path');
 const { exec } = require('child_process');
 const { getArduinoBoardPort } = require('utils');
@@ -22,11 +22,13 @@ const createWindow = () => {
             enableRemoteModule: true,
         },
         acceptFirstMouse: true,
+        backgroundColor: '#2e2c29'
     });
 
     win.loadURL('https://arcade-launcher-client.netlify.app');
 
     win.once('ready-to-show', () => {
+        console.log('ready to show')
         win.show();
     });
 
@@ -63,7 +65,7 @@ const createWindow = () => {
         win.loadFile('../arcade-launcher-client/index.html');
     });
 
-    win.webContents.on('did-finish-load', function() {
+    win.webContents.on('did-finish-load', function () {
         console.log('finish load');
     });
     return win;
@@ -107,11 +109,13 @@ app.whenReady().then(() => {
 
 // Sur Windows, killer le process quand on ferme la fenêtre
 app.on('window-all-closed', () => {
+    console.log('windows closed')
     if (process.platform !== 'darwin') app.quit();
 });
 
 // Sur macOS, quand on ferme la fenêtre le processus reste dans le dock
 app.on('activate', () => {
+    console.log('windows closed 2')
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 

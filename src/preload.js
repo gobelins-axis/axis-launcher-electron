@@ -1,6 +1,8 @@
 const { ipcRenderer } = require('electron');
+const { webContents } = require('electron');
 
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('preload')
     setTimeout(() => {
         console.log(window);
         if (!window.__arcade__) {
@@ -10,20 +12,26 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }, 1000);
 
-    const voyageGame = document.querySelector('.spacevoyage');
-    const jahnerationGame = document.querySelector('.jahneration');
+    ipcRenderer.on("hide", function () {
+        console.log('hide pls')
+        const loadingOverlay = document.querySelector('#loadingOverlay')
+        loadingOverlay.classList.remove('hidden');
+    });
+
+    const voyageGame = document.querySelector('#spacevoyage');
+    const jahnerationGame = document.querySelector('#jahneration');
 
     const changeViewToVoyage = () => {
-        ipcRenderer.sendSync('voyageGame');
-    };
+        ipcRenderer.send('voyageGame');
+    }
 
     const changeViewToJah = () => {
-        ipcRenderer.sendSync('jahGame');
-    };
+        ipcRenderer.send('jahGame');
+    }
 
     const backToHome = () => {
-        ipcRenderer.sendSync('backToHome');
-    };
+        ipcRenderer.send('backToHome');
+    }
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
