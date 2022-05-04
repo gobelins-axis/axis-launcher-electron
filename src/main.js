@@ -62,7 +62,7 @@ const createWindow = () => {
 
     // BACK TO HOME
     ipcMain.on('backToHome', (event) => {
-        win.loadFile('../arcade-launcher-client/index.html');
+        win.loadURL('https://arcade-launcher-client.netlify.app');
     });
 
     win.webContents.on('did-finish-load', function() {
