@@ -19,10 +19,12 @@ function start(arduinoPort) {
         ipcMain,
     });
 
-    const controllerManager = new ControllerManager({
-        arduinoPort,
-        window: windowManager.window,
-    });
+    if (arduinoPort) {
+        const controllerManager = new ControllerManager({
+            arduinoPort,
+            window: windowManager.window,
+        });
+    }
 
     windowManager.start();
 }
