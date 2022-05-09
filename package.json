@@ -26,7 +26,6 @@
     "electron": "^17.1.0",
     "electron-reloader": "^1.2.3",
     "eslint": "^8.12.0",
-    "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-n": "^15.1.0",
     "eslint-plugin-node": "^11.1.0",
