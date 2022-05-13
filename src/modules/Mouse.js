@@ -24,6 +24,9 @@ class Mouse {
         this._position = robot.getMousePos();
     }
 
+    /**
+     * Private
+     */
     _bindAll() {
         this._mousemoveHandler = this._mousemoveHandler.bind(this);
         this._mouseEnableHandler = this._mouseEnableHandler.bind(this);

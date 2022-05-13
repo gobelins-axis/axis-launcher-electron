@@ -41,18 +41,38 @@ class ControllerManager {
     }
 
     _messageReceivedHandler(data) {
-        if (data.includes('buttonName:') && data.includes('buttonState:')) {
-            const buttonName = data.split('_')[0].split(':')[1];
-            const buttonState = data.split('_')[1].split(':')[1];
-            this._window.webContents.send(buttonState, buttonName);
-        }
+        const messageData = this._getMessageData(data);
 
-        if (data.includes('id:1') || data.includes('id:2')) {
-            const id = parseInt(data.split('_')[0].split(':')[1]);
-            const joystickX = parseInt(data.split('_')[1].split(':')[1]);
-            const joystickY = parseInt(data.split('_')[2].split(':')[1]);
-            this._window.webContents.send('joystick:move', { id, position: { x: joystickX, y: joystickY } });
-        }
+        if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
+        if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
+    }
+
+    _joystickMessageReceivedHandler(data) {
+        this._window.webContents.send('joystick:move', {
+            id: parseInt(data.id),
+            position: {
+                x: parseInt(data.x),
+                y: parseInt(data.y),
+            },
+        });
+    }
+
+    _buttonMessageReceivedHandler(data) {
+        this._window.webContents.send(data.state, {
+            key: data.key,
+            id: parseInt(data.id),
+        });
+    }
+
+    _getMessageData(data) {
+        const newData = {};
+        const rows = data.split('__');
+        rows.forEach(item => {
+            const key = item.split(':')[0];
+            const value = item.split(':')[1];
+            if (key !== undefined && value !== undefined) newData[key] = value;
+        });
+        return newData;
     }
 }
 
