@@ -1,6 +1,6 @@
 // Vendor
 const path = require('path');
-const { app, BrowserWindow } = require('electron');
+const { BrowserWindow } = require('electron');
 
 class WindowManager {
     constructor(options = {}) {
@@ -50,7 +50,6 @@ class WindowManager {
                 enableRemoteModule: true,
             },
             acceptFirstMouse: true,
-            backgroundColor: '#2e2c29',
         });
 
         return win;

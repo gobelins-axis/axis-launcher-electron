@@ -4,18 +4,20 @@ const { ipcMain } = require('electron');
 const { getArduinoBoardPort } = require('utils');
 
 // Managers
-const WindowManager = require('./WindowManager');
-const ControllerManager = require('./ControllerManager');
+const WindowManager = require('./managers/WindowManager');
+const ControllerManager = require('./managers/ControllerManager');
+const Mouse = require('./modules/Mouse');
 
 // Environment variables
 require('dotenv').config();
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-        url: 'https://arcade-launcher-client.netlify.app',
+        // url: 'https://arcade-launcher-client.netlify.app',
+        url: 'http://localhost:3003',
         width: 1500,
         height: 1200,
-        preload: './preload.js',
+        preload: '../preload.js',
         ipcMain,
     });
 
@@ -24,6 +26,8 @@ function start(arduinoPort) {
             arduinoPort,
             window: windowManager.window,
         });
+
+        const mouse = new Mouse();
     }
 
     windowManager.start();

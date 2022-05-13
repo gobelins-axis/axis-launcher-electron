@@ -37,8 +37,10 @@ npm start
 ## Build
 
 ```bash
-npm run build
+npm run make
 ```
+
+[More infos](https://www.electronjs.org/docs/latest/tutorial/quick-start#package-and-distribute-your-application)
 
 ## Authors
 

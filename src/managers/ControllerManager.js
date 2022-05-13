@@ -1,7 +1,6 @@
 // Vendor
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
-const { normalizeJoystickSignal } = require('utils');
 
 const BAUD_RATE = 9600;
 
@@ -48,13 +47,11 @@ class ControllerManager {
             this._window.webContents.send(buttonState, buttonName);
         }
 
-        if (data.includes('joystickId:1') || data.includes('joystickId:2')) {
-            const joystickId = parseInt(data.split('_')[0].split(':')[1]);
-            const joystickX = data.split('_')[1].split(':')[1];
-            const joystickY = data.split('_')[2].split(':')[1];
-
-            const normalizedPosition = normalizeJoystickSignal(joystickX, joystickY);
-            this._window.webContents.send('joystick:move', { joystickId, position: normalizedPosition });
+        if (data.includes('id:1') || data.includes('id:2')) {
+            const id = parseInt(data.split('_')[0].split(':')[1]);
+            const joystickX = parseInt(data.split('_')[1].split(':')[1]);
+            const joystickY = parseInt(data.split('_')[2].split(':')[1]);
+            this._window.webContents.send('joystick:move', { id, position: { x: joystickX, y: joystickY } });
         }
     }
 }
