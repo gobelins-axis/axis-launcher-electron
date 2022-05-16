@@ -1,5 +1,5 @@
 {
-  "name": "arcade-launcher",
+  "name": "axis-launcher",
   "version": "1.0.0",
   "description": "Application that starts games",
   "main": "src/main.js",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/arcade-feu/arcade-launcher.git"
+    "url": "git+https://github.com/gobelins-axis/axis-launcher.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/arcade-feu/arcade-launcher/issues"
+    "url": "https://github.com/gobelins-axis/axis-launcher/issues"
   },
-  "homepage": "https://github.com/arcade-feu/arcade-launcher#readme",
+  "homepage": "https://github.com/gobelins-axis/axis-launcher#readme",
   "devDependencies": {
     "@babel/core": "^7.17.8",
     "@babel/eslint-parser": "^7.17.0",
@@ -38,10 +38,10 @@
     "eslint-plugin-promise": "^6.0.0"
   },
   "dependencies": {
-    "arcade-api": "github:arcade-feu/arcade-api",
+    "axis-api": "github:gobelins-axis/axis-api",
     "electron-squirrel-startup": "^1.0.0",
     "robotjs": "^0.6.0",
-    "utils": "github:arcade-feu/utils",
+    "utils": "github:gobelins-axis/utils",
     "path": "^0.12.7",
     "serialport": "^10.3.0",
     "@serialport/parser-readline": "^10.3.0",
@@ -54,7 +54,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "arcade_launcher"
+            "name": "axis_launcher"
           }
         },
         {

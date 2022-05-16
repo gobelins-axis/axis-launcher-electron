@@ -13,7 +13,7 @@ require('dotenv').config();
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-        // url: 'https://arcade-launcher-client.netlify.app',
+        // url: 'https://axis-launcher-front.netlify.app',
         url: 'http://localhost:3003',
         width: 1500,
         height: 1200,

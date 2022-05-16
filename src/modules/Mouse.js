@@ -15,7 +15,7 @@ class Mouse {
     constructor(options = {}) {
         // Setup
         this._speed = 12;
-        this._isEnabled = false;
+        this._isEnabled = true;
 
         this._bindAll();
         this._setupEventListeners();

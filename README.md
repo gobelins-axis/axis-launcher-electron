@@ -1,6 +1,6 @@
-# 🚀 Arcade Launcher
+# 🚀 Axis Launcher
 
-Electron Application to lauch games on our Arcade Machine, the application is also handling the communication between our controllers and the game.
+Electron Application to lauch games on our Axis Machine, the application is also handling the communication between our controllers and the game.
 
 ## Dependencies
 
