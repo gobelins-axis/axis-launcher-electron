@@ -15,7 +15,7 @@ class Mouse {
     constructor(options = {}) {
         // Setup
         this._speed = 12;
-        this._isEnabled = true;
+        this._isEnabled = false;
 
         this._bindAll();
         this._setupEventListeners();
@@ -29,12 +29,14 @@ class Mouse {
      */
     _bindAll() {
         this._mousemoveHandler = this._mousemoveHandler.bind(this);
+        this._mouseClickHandler = this._mouseClickHandler.bind(this);
         this._mouseEnableHandler = this._mouseEnableHandler.bind(this);
         this._mouseDisableHandler = this._mouseDisableHandler.bind(this);
     }
 
     _setupEventListeners() {
         ipcMain.on('mouse:move', this._mousemoveHandler);
+        ipcMain.on('mouse:click', this._mouseClickHandler);
         ipcMain.on('mouse:enable', this._mouseEnableHandler);
         ipcMain.on('mouse:disable', this._mouseDisableHandler);
     }
@@ -46,6 +48,11 @@ class Mouse {
         this._position.y -= position.y * this._speed;
         this._position.y = clamp(this._position.y, 0, SCREEN_HEIGHT);
         robot.moveMouse(this._position.x, this._position.y);
+    }
+
+    _mouseClickHandler(event, data) {
+        if (!this._isEnabled) return;
+        robot.mouseClick();
     }
 
     _mouseEnableHandler(event, speedFactor = 1) {
