@@ -8,7 +8,7 @@ const { getAuth } = require('firebase-admin/auth');
 // Firebase service account
 const serviceAccount = require('../../firebase-service-account.json');
 
-const REFRESH_TOKEN_RATE = 1; // Minutes
+const REFRESH_TOKEN_RATE = 10; // Minutes
 
 class FirebaseAuthentificator {
     constructor() {
