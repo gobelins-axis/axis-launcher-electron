@@ -40,11 +40,8 @@
   "dependencies": {
     "@serialport/parser-readline": "^10.3.0",
     "axis-api": "github:gobelins-axis/axis-api",
-    "body-parser": "^1.20.0",
-    "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "electron-squirrel-startup": "^1.0.0",
-    "express": "^4.18.1",
     "firebase": "^9.8.1",
     "firebase-admin": "^10.2.0",
     "node-cron": "^3.0.0",

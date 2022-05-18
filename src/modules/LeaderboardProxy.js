@@ -1,21 +1,15 @@
 // Vendor
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const { ipcMain } = require('electron');
 
 // Modules
 const FirebaseApplication = require('./FirebaseApplication');
 const FirebaseAuthentificator = require('./FirebaseAuthentificator');
 
 class LeaderboardProxy {
-    constructor(options = {}) {
-        // Props
-        this._port = options.port;
-
+    constructor() {
         // Setup
         this._firebaseApplication = this._createFirebaseApplication();
         this._firebaseAuthentificator = this._createFirebaseAuthentificator();
-        this._expressApplication = this._createExpressApplication();
 
         this._bindAll();
         this._setupEventListeners();
@@ -26,22 +20,11 @@ class LeaderboardProxy {
      */
     start() {
         this._firebaseAuthentificator.start();
-        this._expressApplication.listen(this._port, () => {
-            console.log(`\n🏃 Server running on http://localhost:${this._port}\n`);
-        });
     }
 
     /**
      * Private
      */
-    _createExpressApplication() {
-        const app = express();
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
-        app.use(cors({ origin: '*' }));
-        return app;
-    }
-
     _createFirebaseApplication() {
         const firebaseApplication = new FirebaseApplication();
         return firebaseApplication;
@@ -58,27 +41,36 @@ class LeaderboardProxy {
     }
 
     _setupEventListeners() {
-        this._expressApplication.get('/get/:id', this._getRequestHandler);
-        this._expressApplication.post('/post/:id', this._postRequestHandler);
+        ipcMain.on('leaderboard:get', this._getRequestHandler);
+        ipcMain.on('leaderboard:post', this._postRequestHandler);
     }
 
-    _getRequestHandler(request, response) {
-        const id = request.params.id;
-        response.status(200).send({ message: `Coucou ${id}` });
+    _getRequestHandler(event, data) {
+        const id = data.id;
+
+        this._firebaseApplication.getScores(id)
+            .then(
+                (scores) => {
+                    event.sender.send('leaderboard:get:completed', scores);
+                },
+                (error) => {
+                    event.sender.send('leaderboard:get:error', error);
+                }
+            );
     }
 
-    _postRequestHandler(request, response) {
-        const id = request.params.id;
-        const score = request.body;
+    _postRequestHandler(event, data) {
+        const id = data.id;
+        const score = data.score;
         const token = this._firebaseAuthentificator.token;
 
         this._firebaseApplication.postScore(token, id, score)
             .then(
                 () => {
-                    response.status(200).send({ message: 'Success' });
+                    event.sender.send('leaderboard:post:completed', { message: 'Success' });
                 },
                 (error) => {
-                    response.status(500).send({ ...error });
+                    event.sender.send('leaderboard:post:error', error);
                 }
             );
     }

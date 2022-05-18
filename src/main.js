@@ -24,9 +24,7 @@ function start(arduinoPort) {
         ipcMain,
     });
 
-    const leaderboardProxy = new LeaderboardProxy({
-        port: '8888',
-    });
+    const leaderboardProxy = new LeaderboardProxy();
 
     if (arduinoPort) {
         const controllerManager = new ControllerManager({

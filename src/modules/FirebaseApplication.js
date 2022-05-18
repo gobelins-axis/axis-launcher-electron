@@ -1,10 +1,10 @@
 // Vendor
 const { initializeApp, getApps } = require('firebase/app');
-const { getFirestore, doc, collection, setDoc, addDoc } = require('firebase/firestore');
+const { getFirestore, doc, collection, getDocs, addDoc } = require('firebase/firestore');
 const { getAuth, signInWithCustomToken } = require('firebase/auth');
 
 class FirebaseApplication {
-    constructor(options = {}) {
+    constructor() {
         // Setup
         this._config = {
             apiKey: process.env.FIREBASE_API_KEY,
@@ -43,7 +43,7 @@ class FirebaseApplication {
     postScore(token, id, score) {
         const promise = new Promise((resolve, reject) => {
             signInWithCustomToken(this._auth, token)
-                .then((credentials) => {
+                .then(() => {
                     const leaderboardCollection = collection(this._firestore, 'leaderboards');
                     const gameDocument = doc(leaderboardCollection, id);
                     const scoreCollection = collection(gameDocument, 'scores');
@@ -54,6 +54,24 @@ class FirebaseApplication {
                     });
                 })
                 .catch((error) => {
+                    reject(error);
+                });
+        });
+        return promise;
+    }
+
+    getScores(id) {
+        const promise = new Promise((resolve, reject) => {
+            const leaderboardCollectionRef = collection(this._firestore, 'leaderboards');
+            const gameDocumentRef = doc(leaderboardCollectionRef, id);
+            const scoreCollection = collection(gameDocumentRef, 'scores');
+            getDocs(scoreCollection)
+                .then((response) => {
+                    const scores = response.docs.map(item => item.data());
+                    resolve(scores);
+                })
+                .catch((error) => {
+                    console.log(error);
                     reject(error);
                 });
         });
