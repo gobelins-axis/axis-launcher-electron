@@ -30,7 +30,7 @@ class WindowManager {
      * Public
      */
     start() {
-        this._window.loadURL(this._url);
+        return this._window.loadURL(this._url);
     }
 
     destroy() {

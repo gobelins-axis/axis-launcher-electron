@@ -38,14 +38,20 @@
     "eslint-plugin-promise": "^6.0.0"
   },
   "dependencies": {
-    "axis-api": "github:gobelins-axis/axis-api",
-    "electron-squirrel-startup": "^1.0.0",
-    "robotjs": "^0.6.0",
-    "utils": "github:gobelins-axis/utils",
-    "path": "^0.12.7",
-    "serialport": "^10.3.0",
     "@serialport/parser-readline": "^10.3.0",
-    "dotenv": "^16.0.0"
+    "axis-api": "github:gobelins-axis/axis-api",
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "express": "^4.18.1",
+    "firebase": "^9.8.1",
+    "firebase-admin": "^10.2.0",
+    "node-cron": "^3.0.0",
+    "path": "^0.12.7",
+    "robotjs": "^0.6.0",
+    "serialport": "^10.3.0",
+    "utils": "github:gobelins-axis/utils"
   },
   "config": {
     "forge": {

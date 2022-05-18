@@ -1,3 +1,6 @@
+// Environment variables
+require('dotenv').config();
+
 // Vendor
 const { app } = require('electron');
 const { ipcMain } = require('electron');
@@ -6,10 +9,10 @@ const { getArduinoBoardPort } = require('utils');
 // Managers
 const WindowManager = require('./managers/WindowManager');
 const ControllerManager = require('./managers/ControllerManager');
-const Mouse = require('./modules/Mouse');
 
-// Environment variables
-require('dotenv').config();
+// Modules
+const Mouse = require('./modules/Mouse');
+const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
@@ -21,6 +24,10 @@ function start(arduinoPort) {
         ipcMain,
     });
 
+    const leaderboardProxy = new LeaderboardProxy({
+        port: '8888',
+    });
+
     if (arduinoPort) {
         const controllerManager = new ControllerManager({
             arduinoPort,
@@ -30,13 +37,14 @@ function start(arduinoPort) {
         const mouse = new Mouse();
     }
 
+    leaderboardProxy.start();
     windowManager.start();
 }
 
 app.whenReady().then(() => {
     getArduinoBoardPort().then(
         (arduinoPort) => {
-            start(arduinoPort);
+            start(arduinoPort, token);
         },
         (error) => {
             console.log(error);
