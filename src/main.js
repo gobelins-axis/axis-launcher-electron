@@ -42,7 +42,7 @@ function start(arduinoPort) {
 app.whenReady().then(() => {
     getArduinoBoardPort().then(
         (arduinoPort) => {
-            start(arduinoPort, token);
+            start(arduinoPort);
         },
         (error) => {
             console.log(error);
