@@ -1,19 +1,11 @@
-// Vendor
-const { SerialPort } = require('serialport');
-const { ReadlineParser } = require('@serialport/parser-readline');
-
-const BAUD_RATE = 9600;
-
 class ControllerManager {
     constructor(options = {}) {
         // Props
-        this._arduinoPort = options.arduinoPort;
+        this._serialPort = options.serialPort;
+        this._parser = options.parser;
         this._window = options.window;
 
         // Setup
-        this._serialPort = this._createSerialPort();
-        this._parser = this._createParser();
-
         this._bindAll();
         this._setupEventListeners();
     }
@@ -21,19 +13,20 @@ class ControllerManager {
     /**
      * Private
      */
-    _createSerialPort() {
-        const serialPort = new SerialPort({ path: this._arduinoPort, baudRate: BAUD_RATE });
-        return serialPort;
+    _getMessageData(data) {
+        const newData = {};
+        const rows = data.split('__');
+        rows.forEach(item => {
+            const key = item.split(':')[0];
+            const value = item.split(':')[1];
+            if (key !== undefined && value !== undefined) newData[key] = value;
+        });
+        return newData;
     }
 
-    _createParser() {
-        const parser = this._serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
-        return parser;
-    }
-
-    // BindAll
     _bindAll() {
         this._messageReceivedHandler = this._messageReceivedHandler.bind(this);
+        this._buttonHomeMessageReceivedHandler = this._buttonHomeMessageReceivedHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -45,6 +38,7 @@ class ControllerManager {
 
         if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
         if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
+        if (messageData.type === 'button-home') this._buttonHomeMessageReceivedHandler(messageData);
     }
 
     _joystickMessageReceivedHandler(data) {
@@ -64,15 +58,8 @@ class ControllerManager {
         });
     }
 
-    _getMessageData(data) {
-        const newData = {};
-        const rows = data.split('__');
-        rows.forEach(item => {
-            const key = item.split(':')[0];
-            const value = item.split(':')[1];
-            if (key !== undefined && value !== undefined) newData[key] = value;
-        });
-        return newData;
+    _buttonHomeMessageReceivedHandler(data) {
+        this._window.webContents.send(`home:${data.state}`, {});
     }
 }
 

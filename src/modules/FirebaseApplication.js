@@ -43,7 +43,7 @@ class FirebaseApplication {
     postScore(token, id, score) {
         const promise = new Promise((resolve, reject) => {
             signInWithCustomToken(this._auth, token)
-                .then(() => {
+                .then((credentials) => {
                     const leaderboardCollection = collection(this._firestore, 'leaderboards');
                     const gameDocument = doc(leaderboardCollection, id);
                     const scoreCollection = collection(gameDocument, 'scores');

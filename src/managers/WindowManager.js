@@ -62,6 +62,7 @@ class WindowManager {
         this._readyToShowHandler = this._readyToShowHandler.bind(this);
         this._loadCompleteHandler = this._loadCompleteHandler.bind(this);
         this._urlUpdateHandler = this._urlUpdateHandler.bind(this);
+        this._exitGameHandler = this._exitGameHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -71,6 +72,7 @@ class WindowManager {
 
         // IPC Main
         this._ipcMain.on('url:changed', this._urlUpdateHandler);
+        this._ipcMain.on('exit', this._exitGameHandler);
     }
 
     _removeEventListeners() {
@@ -85,8 +87,14 @@ class WindowManager {
         //
     }
 
-    _urlUpdateHandler(e) {
-        this._url = e.url;
+    _urlUpdateHandler(event, data) {
+        this._url = data.url;
+        this._window.loadURL(this._url);
+    }
+
+    _exitGameHandler() {
+        if (this._url === this._originalUrl) return;
+        this._url = this._originalUrl;
         this._window.loadURL(this._url);
     }
 }
