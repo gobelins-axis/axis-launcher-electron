@@ -17,12 +17,15 @@ const LedManager = require('./managers/LedManager');
 const Mouse = require('./modules/Mouse');
 const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
-const BAUD_RATE = 9600;
+const BAUD_RATE = 28800;
+// const BAUD_RATE = 9600;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
         // url: 'https://axis-launcher-front.netlify.app',
-        url: 'http://localhost:8000',
+        // url: 'http://localhost:8000',
+        // url: 'http://localhost:8080',
+        url: 'http://localhost:3003',
         width: 950,
         height: 950,
         preload: '../preload.js',

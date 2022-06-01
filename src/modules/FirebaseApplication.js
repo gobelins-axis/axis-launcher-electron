@@ -44,13 +44,29 @@ class FirebaseApplication {
         const promise = new Promise((resolve, reject) => {
             signInWithCustomToken(this._auth, token)
                 .then((credentials) => {
-                    const leaderboardCollection = collection(this._firestore, 'leaderboards');
-                    const gameDocument = doc(leaderboardCollection, id);
-                    const scoreCollection = collection(gameDocument, 'scores');
-                    addDoc(scoreCollection, score).then((response) => {
-                        resolve(response);
-                    }).catch((error) => {
-                        resolve(error);
+                    // Check if game id exists
+                    const collectionRefGames = collection(this._firestore, 'games');
+                    getDocs(collectionRefGames).then((gamesResponse) => {
+                        let isGameValideGameId = false;
+                        for (let i = 0; i < gamesResponse.docs.length; i++) {
+                            if (gamesResponse.docs[i].id === id) isGameValideGameId = true;
+                        }
+
+                        console.log({ isGameValideGameId });
+
+                        // If game exists, post score
+                        if (isGameValideGameId) {
+                            const leaderboardCollection = collection(this._firestore, 'leaderboards');
+                            const gameDocument = doc(leaderboardCollection, id);
+                            const scoreCollection = collection(gameDocument, 'scores');
+                            addDoc(scoreCollection, score).then((response) => {
+                                resolve(response);
+                            }).catch((error) => {
+                                resolve(error);
+                            });
+                        } else {
+                            reject(new Error(`Unable to post score: Game with id ${id} does not exist, make sure you used the Game ID provided when uploading your game on Axis Hub`));
+                        }
                     });
                 })
                 .catch((error) => {
