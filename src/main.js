@@ -41,6 +41,7 @@ function start(arduinoPort) {
         const parser = serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
         const controllerManager = new ControllerManager({
+            app,
             serialPort,
             parser,
             windowManager,

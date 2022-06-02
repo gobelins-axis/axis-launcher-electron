@@ -1,12 +1,17 @@
+const RESTART_TIMEOUT = 5000;
+
 class ControllerManager {
     constructor(options = {}) {
         // Props
+        this._application = options.app;
         this._serialPort = options.serialPort;
         this._parser = options.parser;
         this._windowManager = options.windowManager;
         this._window = this._windowManager.window;
 
         // Setup
+        this._isRestarting = false;
+
         this._bindAll();
         this._setupEventListeners();
     }
@@ -28,6 +33,7 @@ class ControllerManager {
     _bindAll() {
         this._messageReceivedHandler = this._messageReceivedHandler.bind(this);
         this._buttonHomeMessageReceivedHandler = this._buttonHomeMessageReceivedHandler.bind(this);
+        this._restartTimeoutCompletedHandler = this._restartTimeoutCompletedHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -60,9 +66,26 @@ class ControllerManager {
     }
 
     _buttonHomeMessageReceivedHandler(data) {
-        console.log('Home', data);
-        // if (this._windowManager.originalUrl === this._windowManager.url) return;
+        if (data.state === 'keydown') this._buttonHomeKeydownHandler(data);
+        if (data.state === 'keyup') this._buttonHomeKeyupHandler(data);
+    }
+
+    _buttonHomeKeydownHandler() {
+        clearTimeout(this._restartTimeout);
+        this._restartTimeout = setTimeout(this._restartTimeoutCompletedHandler, RESTART_TIMEOUT);
+    }
+
+    _buttonHomeKeyupHandler(data) {
+        if (this._isRestarting) return;
+        clearTimeout(this._restartTimeout);
+        if (this._windowManager.originalUrl === this._windowManager.url) return;
         this._window.webContents.send(`home:${data.state}`, {});
+    }
+
+    _restartTimeoutCompletedHandler() {
+        this._isRestarting = true;
+        this._application.relaunch();
+        this._application.exit();
     }
 }
 
