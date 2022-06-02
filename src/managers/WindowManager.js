@@ -26,6 +26,14 @@ class WindowManager {
         return this._window;
     }
 
+    get originalUrl() {
+        return this._originalUrl;
+    }
+
+    get url() {
+        return this._url;
+    }
+
     /**
      * Public
      */
@@ -88,6 +96,7 @@ class WindowManager {
     }
 
     _urlUpdateHandler(event, data) {
+        if (data.url === this._url) return;
         this._url = data.url;
         this._window.loadURL(this._url);
     }

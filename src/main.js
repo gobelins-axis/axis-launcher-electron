@@ -43,7 +43,7 @@ function start(arduinoPort) {
         const controllerManager = new ControllerManager({
             serialPort,
             parser,
-            window: windowManager.window,
+            windowManager,
         });
 
         const ledManager = new LedManager({

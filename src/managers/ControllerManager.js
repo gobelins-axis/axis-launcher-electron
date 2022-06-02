@@ -3,7 +3,8 @@ class ControllerManager {
         // Props
         this._serialPort = options.serialPort;
         this._parser = options.parser;
-        this._window = options.window;
+        this._windowManager = options.windowManager;
+        this._window = this._windowManager.window;
 
         // Setup
         this._bindAll();
@@ -59,6 +60,8 @@ class ControllerManager {
     }
 
     _buttonHomeMessageReceivedHandler(data) {
+        console.log('Home', data);
+        // if (this._windowManager.originalUrl === this._windowManager.url) return;
         this._window.webContents.send(`home:${data.state}`, {});
     }
 }
