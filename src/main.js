@@ -15,7 +15,6 @@ const Mouse = require('./modules/Mouse');
 const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
 const BAUD_RATE = 28800;
-// const BAUD_RATE = 9600;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
@@ -67,9 +66,3 @@ app.whenReady().then(() => {
         },
     );
 });
-
-// Sur macOS, quand on ferme la fenêtre le processus reste dans le dock
-// app.on('activate', () => {
-//     console.log('windows closed 2');
-//     if (BrowserWindow.getAllWindows().length === 0) createWindow();
-// });
