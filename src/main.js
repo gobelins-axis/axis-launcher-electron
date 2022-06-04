@@ -1,6 +1,3 @@
-// Environment variables
-require('dotenv').config();
-
 // Vendor
 const { app } = require('electron');
 const { ipcMain } = require('electron');
@@ -22,17 +19,17 @@ const BAUD_RATE = 28800;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-        // url: 'https://axis-launcher-front.netlify.app',
-        // url: 'http://localhost:8000',
+        // url: 'https://axis-launcher.netlify.app',
+        url: 'http://localhost:8000',
         // url: 'http://localhost:8080',
-        url: 'http://localhost:3003',
+        // url: 'http://localhost:3003',
         width: 950,
         height: 950,
         preload: '../preload.js',
         ipcMain,
     });
 
-    windowManager.window.webContents.openDevTools();
+    // windowManager.window.webContents.openDevTools();
 
     const leaderboardProxy = new LeaderboardProxy();
 

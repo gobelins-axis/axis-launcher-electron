@@ -3,11 +3,14 @@ const { initializeApp, getApps } = require('firebase/app');
 const { getFirestore, doc, collection, getDocs, addDoc } = require('firebase/firestore');
 const { getAuth, signInWithCustomToken } = require('firebase/auth');
 
+// Config
+const env = require('../../env.json');
+
 class FirebaseApplication {
     constructor() {
         // Setup
         this._config = {
-            apiKey: process.env.FIREBASE_API_KEY,
+            apiKey: env.FIREBASE_API_KEY,
             authDomain: 'gobelins-axis.firebaseapp.com',
             projectId: 'gobelins-axis',
             storageBucket: 'gobelins-axis.appspot.com',
