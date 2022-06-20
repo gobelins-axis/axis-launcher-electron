@@ -55,8 +55,6 @@ class FirebaseApplication {
                             if (gamesResponse.docs[i].id === id) isGameValideGameId = true;
                         }
 
-                        console.log({ isGameValideGameId });
-
                         // If game exists, post score
                         if (isGameValideGameId) {
                             const leaderboardCollection = collection(this._firestore, 'leaderboards');

@@ -45,6 +45,13 @@ class WindowManager {
         this._removeEventListeners();
     }
 
+    goToSleep() {
+        if (this._url === this._originalUrl) return true;
+        this._url = this._originalUrl;
+        this._window.loadURL(this._url);
+        return false;
+    }
+
     /**
      * Private
      */

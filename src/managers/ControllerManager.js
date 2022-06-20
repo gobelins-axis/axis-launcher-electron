@@ -1,4 +1,6 @@
 const RESTART_TIMEOUT = 5000;
+const INACTIVITY_TIMEOUT = 60000 * 10; // 10 Minutes
+const JOYSTICK_INACTIVITY_THRESHOLD = 5;
 
 class ControllerManager {
     constructor(options = {}) {
@@ -10,10 +12,14 @@ class ControllerManager {
         this._window = this._windowManager.window;
 
         // Setup
+        this._joystickSignal1 = {};
+        this._joystickSignal2 = {};
         this._isRestarting = false;
+        this._isInactive = false;
 
         this._bindAll();
         this._setupEventListeners();
+        this._poke();
     }
 
     /**
@@ -30,10 +36,21 @@ class ControllerManager {
         return newData;
     }
 
+    _poke() {
+        clearTimeout(this._inactivityTimeout);
+        this._inactivityTimeout = setTimeout(this._inactivityTimeoutHandler, INACTIVITY_TIMEOUT);
+
+        if (this._isInactive) {
+            this._isInactive = false;
+            this._window.webContents.send('awake', {});
+        }
+    }
+
     _bindAll() {
         this._messageReceivedHandler = this._messageReceivedHandler.bind(this);
         this._buttonHomeMessageReceivedHandler = this._buttonHomeMessageReceivedHandler.bind(this);
         this._restartTimeoutCompletedHandler = this._restartTimeoutCompletedHandler.bind(this);
+        this._inactivityTimeoutHandler = this._inactivityTimeoutHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -56,6 +73,28 @@ class ControllerManager {
                 y: parseInt(data.y),
             },
         });
+
+        if (parseInt(data.id) === 1) {
+            const deltaX = parseInt(data.x) - this._joystickSignal1.x;
+            const deltaY = parseInt(data.y) - this._joystickSignal1.y;
+
+            if (Math.abs(deltaX) > JOYSTICK_INACTIVITY_THRESHOLD || Math.abs(deltaY) > JOYSTICK_INACTIVITY_THRESHOLD) {
+                this._poke();
+            }
+
+            this._joystickSignal1 = { x: parseInt(data.x), y: parseInt(data.y) };
+        }
+
+        if (parseInt(data.id) === 2) {
+            const deltaX = parseInt(data.x) - this._joystickSignal2.x;
+            const deltaY = parseInt(data.y) - this._joystickSignal2.y;
+
+            if (Math.abs(deltaX) > JOYSTICK_INACTIVITY_THRESHOLD || Math.abs(deltaY) > JOYSTICK_INACTIVITY_THRESHOLD) {
+                this._poke();
+            }
+
+            this._joystickSignal2 = { x: parseInt(data.x), y: parseInt(data.y) };
+        }
     }
 
     _buttonMessageReceivedHandler(data) {
@@ -63,11 +102,15 @@ class ControllerManager {
             key: data.key,
             id: parseInt(data.id),
         });
+
+        this._poke();
     }
 
     _buttonHomeMessageReceivedHandler(data) {
         if (data.state === 'keydown') this._buttonHomeKeydownHandler(data);
         if (data.state === 'keyup') this._buttonHomeKeyupHandler(data);
+
+        this._poke();
     }
 
     _buttonHomeKeydownHandler() {
@@ -86,6 +129,13 @@ class ControllerManager {
         this._isRestarting = true;
         this._application.relaunch();
         this._application.exit();
+    }
+
+    _inactivityTimeoutHandler() {
+        this._isInactive = true;
+        this._window.webContents.send('sleep', {});
+        const sleep = this._windowManager.goToSleep();
+        if (!sleep) this._poke();
     }
 }
 
