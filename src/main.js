@@ -14,6 +14,9 @@ const LedManager = require('./managers/LedManager');
 const Mouse = require('./modules/Mouse');
 const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
+// TPM
+const Server = require('./modules/Server');
+
 const BAUD_RATE = 28800;
 
 function start(arduinoPort) {
@@ -53,6 +56,11 @@ function start(arduinoPort) {
 
     leaderboardProxy.start();
     windowManager.start();
+
+    // TPM : Start local server
+    const server = new Server({
+        window: windowManager.window,
+    });
 }
 
 app.whenReady().then(() => {
