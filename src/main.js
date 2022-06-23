@@ -58,9 +58,10 @@ function start(arduinoPort) {
             window: windowManager.window,
             serialPort,
         });
+
+        ledManager.start();
     }
 
-    ledManager.start();
     leaderboardProxy.start();
     windowManager.start();
 }
