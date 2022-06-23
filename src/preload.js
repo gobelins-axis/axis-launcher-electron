@@ -8,5 +8,9 @@ window.addEventListener('DOMContentLoaded', () => {
         window.__axis__.set_ipc_renderer(ipcRenderer);
     }
 
+    ipcRenderer.on('load-complete', (event, data) => {
+        window.__axis__history__index = data;
+    });
+
     document.documentElement.classList.add('is-axis-machine');
 });

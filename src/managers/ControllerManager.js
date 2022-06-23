@@ -60,6 +60,8 @@ class ControllerManager {
     _messageReceivedHandler(data) {
         const messageData = this._getMessageData(data);
 
+        this._window.webContents.send('hello-world', data);
+
         if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
         if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
         if (messageData.type === 'button-home') this._buttonHomeMessageReceivedHandler(messageData);

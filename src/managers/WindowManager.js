@@ -1,6 +1,6 @@
 // Vendor
 const path = require('path');
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, ipcMain, ipcRenderer } = require('electron');
 
 class WindowManager {
     constructor(options = {}) {
@@ -12,6 +12,7 @@ class WindowManager {
         this._ipcMain = options.ipcMain;
 
         // Setup
+        this._historyIndex = 0;
         this._url = this._originalUrl;
         this._window = this._createWindow();
 
@@ -63,8 +64,10 @@ class WindowManager {
                 preload: path.join(__dirname, this._preload),
                 contextIsolation: false,
                 enableRemoteModule: true,
+                nodeIntegration: true,
             },
             acceptFirstMouse: true,
+            // fullscreen: true,
         });
 
         return win;
@@ -99,7 +102,8 @@ class WindowManager {
     }
 
     _loadCompleteHandler() {
-        //
+        this._window.webContents.send('load-complete', this._historyIndex);
+        this._historyIndex++;
     }
 
     _urlUpdateHandler(event, data) {

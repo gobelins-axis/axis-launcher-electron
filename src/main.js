@@ -52,15 +52,16 @@ function start(arduinoPort) {
         });
 
         const mouse = new Mouse();
+
+        // TPM : Start local server
+        const server = new Server({
+            window: windowManager.window,
+            serialPort,
+        });
     }
 
     leaderboardProxy.start();
     windowManager.start();
-
-    // TPM : Start local server
-    const server = new Server({
-        window: windowManager.window,
-    });
 }
 
 app.whenReady().then(() => {
