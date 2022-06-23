@@ -21,8 +21,8 @@ const BAUD_RATE = 28800;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-        // url: 'https://axis-launcher.netlify.app',
-        url: 'http://localhost:8000',
+        url: 'https://axis-launcher.netlify.app',
+        // url: 'http://localhost:8000',
         // url: 'http://localhost:8080',
         // url: 'http://localhost:3003',
         width: 950,
@@ -60,6 +60,7 @@ function start(arduinoPort) {
         });
     }
 
+    ledManager.start();
     leaderboardProxy.start();
     windowManager.start();
 }

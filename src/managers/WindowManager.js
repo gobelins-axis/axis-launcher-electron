@@ -67,7 +67,7 @@ class WindowManager {
                 nodeIntegration: true,
             },
             acceptFirstMouse: true,
-            // fullscreen: true,
+            fullscreen: true,
         });
 
         return win;

@@ -13,6 +13,13 @@ class LedManager {
     }
 
     /**
+     * Public
+     */
+    start() {
+        this._serialPort.write('start\n');
+    }
+
+    /**
      * Private
      */
     _getMessageData(data) {
