@@ -34,6 +34,8 @@ npm install
 npm start
 ```
 
+You will need some secret environment files to make it work, get in touch with the Axis team to have access to them.
+
 ## Build
 
 ```bash
