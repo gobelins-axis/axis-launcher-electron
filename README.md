@@ -52,11 +52,11 @@ If you import the packaged application on the machine and try to launch it by do
 open -a axis-launcher.app
 ```
 
-To make it a bit easier we created an apple script named "Axis Launcher" that you can find on the Desktop, you can double click that icon to launch the application. Make sure that there is no other axis lancher application on the Machine otherwise it could launch the wrong version.
+To make it a bit easier we created an Automator App named "Axis Launcher Helper" that you can find on the Desktop, you can double click that app to launch the application. Make sure that there is no other axis lancher application on the Machine otherwise it could launch the wrong version.
 
 ## Update the application on the Axis Machine
 
-Build the Application, import it to the Axis Machine application folder under the name axis-launcher.app. Make sure that no older version is still on the Axis machine. To test your updates, just launch the Apple Script (explained above).
+Build the Application, import it to the Axis Machine application folder under the name axis-launcher.app. Make sure that no older version is still on the Axis machine. To test your updates, just launch the "Axis Launcher Helper" application (explained above).
 
 ## Authors
 
