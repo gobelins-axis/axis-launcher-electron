@@ -65,6 +65,7 @@ class WindowManager {
                 contextIsolation: false,
                 enableRemoteModule: true,
                 nodeIntegration: true,
+                autoplayPolicy: 'no-user-gesture-required',
             },
             acceptFirstMouse: true,
             fullscreen: true,
