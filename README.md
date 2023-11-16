@@ -42,6 +42,12 @@ You will need some secret environment files to make it work, get in touch with t
 npm run make
 ```
 
+If you're using a ARM64 machine you need to specify the arch x64 in the command line like so :
+
+```bash
+npm run make -- --arch=x64 --platform=darwin
+```
+
 [More infos](https://www.electronjs.org/docs/latest/tutorial/quick-start#package-and-distribute-your-application)
 
 ## Usage on the Axis Machine
