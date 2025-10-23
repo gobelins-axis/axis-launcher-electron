@@ -51,6 +51,7 @@ class ControllerManager {
         this._buttonHomeMessageReceivedHandler = this._buttonHomeMessageReceivedHandler.bind(this);
         this._restartTimeoutCompletedHandler = this._restartTimeoutCompletedHandler.bind(this);
         this._inactivityTimeoutHandler = this._inactivityTimeoutHandler.bind(this);
+        this._alternativeAnalogMessageReceivedHandler = this._alternativeAnalogMessageReceivedHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -65,6 +66,7 @@ class ControllerManager {
         if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
         if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
         if (messageData.type === 'button-home') this._buttonHomeMessageReceivedHandler(messageData);
+        if (messageData.type === 'alternative-analog') this._alternativeAnalogMessageReceivedHandler(messageData);
     }
 
     _joystickMessageReceivedHandler(data) {
@@ -113,6 +115,13 @@ class ControllerManager {
         if (data.state === 'keyup') this._buttonHomeKeyupHandler(data);
 
         this._poke();
+    }
+
+    _alternativeAnalogMessageReceivedHandler(data) {
+        this._window.webContents.send('altenative:move', {
+            id: parseInt(data.id),
+            position: parseInt(data.position),
+        });
     }
 
     _buttonHomeKeydownHandler() {
