@@ -8,7 +8,7 @@ const { ReadlineParser } = require('@serialport/parser-readline');
 // Managers
 const WindowManager = require('./managers/WindowManager');
 const ControllerManager = require('./managers/ControllerManager');
-const LedManager = require('./managers/LedManager');
+// const LedManager = require('./managers/LedManager');
 
 // Modules
 const Mouse = require('./modules/Mouse');
@@ -18,12 +18,13 @@ const LeaderboardProxy = require('./modules/LeaderboardProxy');
 const Server = require('./modules/Server');
 
 const BAUD_RATE = 28800;
+//const BAUD_RATE = 115200;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-        url: 'https://axis-launcher.netlify.app',
+         url: 'https://axis-launcher.netlify.app',
         // url: 'http://localhost:8000',
-        // url: 'http://localhost:8080',
+        //url: 'http://localhost:8080',
         // url: 'http://localhost:3003',
         width: 950,
         height: 950,
@@ -46,10 +47,10 @@ function start(arduinoPort) {
             windowManager,
         });
 
-        const ledManager = new LedManager({
-            serialPort,
-            parser,
-        });
+        // const ledManager = new LedManager({
+        //     serialPort,
+        //     parser,
+        // });
 
         const mouse = new Mouse();
 
@@ -59,7 +60,7 @@ function start(arduinoPort) {
             serialPort,
         });
 
-        ledManager.start();
+        // ledManager.start();
     }
 
     leaderboardProxy.start();

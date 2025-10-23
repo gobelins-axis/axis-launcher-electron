@@ -28,10 +28,12 @@ class ControllerManager {
     _getMessageData(data) {
         const newData = {};
         const rows = data.split('__');
+
         rows.forEach(item => {
             const key = item.split(':')[0];
             const value = item.split(':')[1];
             if (key !== undefined && value !== undefined) newData[key] = value;
+            console.log({ key, value })
         });
         return newData;
     }
@@ -59,8 +61,6 @@ class ControllerManager {
 
     _messageReceivedHandler(data) {
         const messageData = this._getMessageData(data);
-
-        this._window.webContents.send('hello-world', data);
 
         if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
         if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
@@ -103,6 +103,12 @@ class ControllerManager {
         this._window.webContents.send(data.state, {
             key: data.key,
             id: parseInt(data.id),
+        });
+
+        console.log({
+            state: data.state,
+            key: data.key,
+            id: parseInt(data.id)
         });
 
         this._poke();
