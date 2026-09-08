@@ -3,7 +3,6 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { app } = require('electron');
 const { ipcMain } = require('electron');
-const { getArduinoBoardPort } = require('utils');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
 
@@ -17,6 +16,9 @@ const LedManager = require('./managers/LedManager');
 const Mouse = require('./modules/Mouse');
 const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
+// Utils
+const getBoardPort = require('./utils/getBoardPort');
+
 const BAUD_RATE = 28800;
 
 // TEMP (dev only): open a tool instead of the menu at startup. Set both back to
@@ -28,7 +30,7 @@ const OPEN_LED_DEBUG_ON_START = false;
 // the toggle above, on purpose.
 const LED_DEBUG_URL = pathToFileURL(path.join(__dirname, 'led-debug/index.html')).href;
 
-function start(arduinoPort) {
+function start(boardPort) {
     const windowManager = new WindowManager({
         url: 'https://axis-launcher.netlify.app',
         // url: 'http://localhost:8000',
@@ -48,8 +50,8 @@ function start(arduinoPort) {
     // Created even without a board so the page can be opened for UI work.
     const calibrationManager = new CalibrationManager({ windowManager });
 
-    if (arduinoPort) {
-        const serialPort = new SerialPort({ path: arduinoPort, baudRate: BAUD_RATE });
+    if (boardPort) {
+        const serialPort = new SerialPort({ path: boardPort, baudRate: BAUD_RATE });
         const parser = serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
         const controllerManager = new ControllerManager({
@@ -82,9 +84,9 @@ function start(arduinoPort) {
 }
 
 app.whenReady().then(() => {
-    getArduinoBoardPort().then(
-        (arduinoPort) => {
-            start(arduinoPort);
+    getBoardPort().then(
+        (boardPort) => {
+            start(boardPort);
         },
         (error) => {
             console.log(error);

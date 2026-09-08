@@ -10,7 +10,7 @@ calibration tool. The cross-repo picture and the shared contracts are in
 
 - `npm install`, then `npm start` (electron-forge). Needs secret env files, ask the team.
 - `npm run make` to package; on Apple Silicon: `npm run make -- --arch=x64 --platform=darwin`. On the cabinet the app must be started with `open -a axis-launcher.app` (see README).
-- `arduino-cli` must be installed on the machine: the port is found through `arduino-cli board list` (`utils` package). Close the Arduino IDE serial monitor before launching, only one process can hold the port.
+- The board port is found with `SerialPort.list()` in `src/utils/getBoardPort.js`: it picks the Teensy by USB vendor id (PJRC `16c0`, product `0483` in USB Serial mode) and refuses to guess when several Teensies are plugged in (pass a `serialNumber` to pin one). No `arduino-cli` needed at runtime. Close the Arduino IDE serial monitor before launching, only one process can hold the port.
 - Electron 17, `nodeIntegration: true`, `contextIsolation: false`: pages can `require('electron')` directly and the preload passes `ipcRenderer` to axis-api via `window.__axis__`.
 
 ## Architecture (`src/`)
