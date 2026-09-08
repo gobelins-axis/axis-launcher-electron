@@ -61,16 +61,23 @@ class ControllerManager {
         this._alternativeAnalogMessageReceivedHandler = this._alternativeAnalogMessageReceivedHandler.bind(this);
     }
 
+    // The combination only works on the menu: a game may legitimately have
+    // W and S held together, and must never be interrupted by the tool.
+    _isOnMenu() {
+        return this._windowManager.url === this._windowManager.originalUrl;
+    }
+
     _trackCalibrationCombo(key, id, state) {
         if (!this._calibrationManager) return;
         if (key !== 'w' && key !== 's') return;
 
         const bothPressed = this._pressedKeys[`w:${id}`] && this._pressedKeys[`s:${id}`];
 
-        if (state === 'keydown' && bothPressed && !this._calibrationComboTimeouts[id]) {
+        if (state === 'keydown' && bothPressed && this._isOnMenu() && !this._calibrationComboTimeouts[id]) {
             this._calibrationComboTimeouts[id] = setTimeout(() => {
                 delete this._calibrationComboTimeouts[id];
-                this._calibrationManager.open();
+                // Checked again: a game may have been launched during the hold.
+                if (this._isOnMenu()) this._calibrationManager.open();
             }, CALIBRATION_COMBO_TIMEOUT);
         }
 

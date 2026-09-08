@@ -7,6 +7,10 @@
 // the page is loaded in the main window by WindowManager. The only extras
 // are the IPC channels described in src/managers/CalibrationManager.js:
 // the raw joystick stream in, and get / apply / save / discard out.
+//
+// Two views:
+//   overview     both joysticks live, as games see them (stored calibration)
+//   calibration  one joystick at a time: intro, center, range, right, up, test
 
 const { ipcRenderer } = require('electron');
 const Axis = require('axis-api').default;
@@ -24,35 +28,37 @@ const CENTER_SAMPLE_COUNT = 25;
 const MIN_RANGE_SPAN = 200;
 // Minimum normalized deflection to accept a "push right" / "push up" sample.
 const MIN_DIRECTION_DEFLECTION = 0.5;
+// Dot travel inside a pad, in vh (half the pad minus the dot).
+const DOT_RADIUS = 15;
 
 const TEXTS = {
     intro: {
         instruction: (id) => `Calibrate joystick ${id}`,
-        hint: 'Press A to start, S to skip this joystick',
+        hint: 'Press A to start, or S to skip this joystick',
     },
     center: {
-        instruction: () => 'Release the joystick and let it rest at the centre',
+        instruction: (id) => `Let joystick ${id} rest at the centre`,
         hint: 'Do not touch it, then press A',
     },
     range: {
-        instruction: () => 'Rotate the joystick slowly along its outer edge, two or three full turns',
-        hint: 'Push it all the way out, then press A',
+        instruction: (id) => `Rotate joystick ${id} slowly along its outer edge`,
+        hint: 'Two or three full turns, pushing all the way out, then press A',
     },
     right: {
-        instruction: () => 'Push the joystick fully to the RIGHT',
+        instruction: (id) => `Push joystick ${id} fully to the right`,
         hint: 'Hold it there and press A',
     },
     up: {
-        instruction: () => 'Push the joystick fully UP',
+        instruction: (id) => `Push joystick ${id} fully up`,
         hint: 'Hold it there and press A',
     },
     test: {
-        instruction: () => 'Test the joystick',
-        hint: 'The green dot is exactly what games will see. Press A to save.',
+        instruction: (id) => `Try joystick ${id}`,
+        hint: 'The white dot is what games will see. Press A to save, X to start over.',
     },
     done: {
-        instruction: () => 'Calibration complete',
-        hint: 'Press A to return to the menu',
+        instruction: () => 'Calibration saved',
+        hint: 'Press A to check both joysticks, or exit with Home',
     },
 };
 
@@ -68,12 +74,14 @@ Axis.registerKeys(' ', 'w', 1);
 // ---------------------------------------------------------------------------
 
 const state = {
+    view: 'overview', // 'overview' | 'calibration'
     joystickIndex: 0,
     stepIndex: 0,
     isDone: false,
     message: '',
     stored: {},
     raw: { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } },
+    game: { 1: { x: 0, y: 0 }, 2: { x: 0, y: 0 } },
     hasSignal: { 1: false, 2: false },
     recentRaw: [],
     draft: createEmptyDraft(),
@@ -81,21 +89,36 @@ const state = {
 };
 
 const els = {
-    title: document.querySelector('.js-title'),
     status: document.querySelector('.js-status'),
     steps: document.querySelector('.js-steps'),
+    inputs: document.querySelector('.js-inputs'),
+    viewOverview: document.querySelector('.js-view-overview'),
+    viewCalibration: document.querySelector('.js-view-calibration'),
     instruction: document.querySelector('.js-instruction'),
     hint: document.querySelector('.js-hint'),
     dot: document.querySelector('.js-dot'),
+    dotRaw: document.querySelector('.js-dot-raw'),
     rawX: document.querySelector('.js-raw-x'),
     rawY: document.querySelector('.js-raw-y'),
-    preview: document.querySelector('.js-preview'),
+    previewRow: document.querySelector('.js-preview-row'),
+    previewX: document.querySelector('.js-preview-x'),
+    previewY: document.querySelector('.js-preview-y'),
     message: document.querySelector('.js-message'),
-    controlA: document.querySelector('.js-control-a'),
-    controlALabel: document.querySelector('.js-control-a-label'),
-    controlX: document.querySelector('.js-control-x'),
-    controlS: document.querySelector('.js-control-s'),
+    overview: {},
 };
+
+JOYSTICK_IDS.forEach((id) => {
+    const root = document.querySelector(`.overview-joystick[data-joystick="${id}"]`);
+    els.overview[id] = {
+        dot: root.querySelector('.js-overview-dot'),
+        dotRaw: root.querySelector('.js-overview-dot-raw'),
+        gameX: root.querySelector('.js-overview-game-x'),
+        gameY: root.querySelector('.js-overview-game-y'),
+        rawX: root.querySelector('.js-overview-raw-x'),
+        rawY: root.querySelector('.js-overview-raw-y'),
+        calibrated: root.querySelector('.js-overview-calibrated'),
+    };
+});
 
 function currentJoystickId() {
     return JOYSTICK_IDS[state.joystickIndex];
@@ -123,8 +146,113 @@ function normalizeAxis(value, center, min, max) {
     return Math.max(-1, Math.min(1, n));
 }
 
+function moveDot(el, pos) {
+    el.style.transform = `translate(${pos.x * DOT_RADIUS}vh, ${-pos.y * DOT_RADIUS}vh)`;
+}
+
+// Raw 0..1023 -> -1..1 with 512 at the centre, low raw y shown as up
+// (same convention as the games' DIRECTION_Y).
+function rawToPad(raw) {
+    return {
+        x: (raw.x - 511.5) / 511.5,
+        y: -(raw.y - 511.5) / 511.5,
+    };
+}
+
 // ---------------------------------------------------------------------------
-// Steps
+// Input indicators (same pattern as axis-launcher-front's Inputs component)
+// ---------------------------------------------------------------------------
+
+const INPUT_SWITCH_OUT_MS = 100;
+let currentInputsKey = '';
+let inputsSwitchTimeout = null;
+
+function buildInputIndicator(input) {
+    const indicator = document.createElement('div');
+    indicator.className = 'input-indicator';
+
+    // Glyphs live in ./icons/input-*.svg (same files as the front's assets/icons)
+    const icon = document.createElement('img');
+    icon.className = 'input-icon';
+    icon.src = `./icons/input-${input.key}.svg`;
+    icon.alt = '';
+    indicator.appendChild(icon);
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = input.label;
+    indicator.appendChild(label);
+
+    return indicator;
+}
+
+function setInputs(inputs) {
+    const key = JSON.stringify(inputs);
+    if (key === currentInputsKey) return;
+    currentInputsKey = key;
+
+    const apply = () => {
+        els.inputs.innerHTML = '';
+        inputs.forEach((input) => els.inputs.appendChild(buildInputIndicator(input)));
+        els.inputs.classList.remove('is-switching');
+    };
+
+    clearTimeout(inputsSwitchTimeout);
+
+    if (!els.inputs.children.length) return apply();
+
+    els.inputs.classList.add('is-switching');
+    inputsSwitchTimeout = setTimeout(apply, INPUT_SWITCH_OUT_MS);
+}
+
+function inputsForState() {
+    const exit = { key: 'home', label: 'Exit' };
+    if (state.view === 'overview') return [{ key: 'a', label: 'Calibrate' }, exit];
+
+    switch (currentStep()) {
+        case 'intro': return [{ key: 'a', label: 'Start' }, { key: 's', label: 'Skip this joystick' }, exit];
+        case 'test': return [{ key: 'a', label: 'Save' }, { key: 'x', label: 'Restart' }, exit];
+        case 'done': return [{ key: 'a', label: 'Check joysticks' }, exit];
+        default: return [{ key: 'a', label: 'Confirm' }, { key: 'x', label: 'Restart' }, exit];
+    }
+}
+
+function calibratedLabel(id) {
+    const stored = state.stored[id];
+    if (stored && stored.createdAt) return `Calibrated ${new Date(stored.createdAt).toLocaleString()}`;
+    return 'Never calibrated, raw values passed through';
+}
+
+// ---------------------------------------------------------------------------
+// Views
+// ---------------------------------------------------------------------------
+
+function showOverview() {
+    state.view = 'overview';
+    state.isDone = false;
+    state.joystickIndex = 0;
+    state.stepIndex = 0;
+    state.message = '';
+    state.draft = createEmptyDraft();
+    state.preview = null;
+    state.recentRaw = [];
+    render();
+}
+
+function startCalibration() {
+    state.view = 'calibration';
+    state.isDone = false;
+    state.joystickIndex = 0;
+    state.stepIndex = 0;
+    state.message = '';
+    state.draft = createEmptyDraft();
+    state.preview = null;
+    state.recentRaw = [];
+    render();
+}
+
+// ---------------------------------------------------------------------------
+// Calibration steps
 // ---------------------------------------------------------------------------
 
 function confirm() {
@@ -137,7 +265,7 @@ function confirm() {
         case 'right': return confirmDirection('x', 'right');
         case 'up': return confirmDirection('y', 'up');
         case 'test': return save();
-        case 'done': return ipcRenderer.send('exit');
+        case 'done': return showOverview();
         default: return null;
     }
 }
@@ -252,6 +380,30 @@ function nextJoystick() {
 // Render
 // ---------------------------------------------------------------------------
 
+function renderOverview() {
+    els.status.textContent = '';
+    els.steps.innerHTML = '';
+
+    JOYSTICK_IDS.forEach((id) => {
+        const ui = els.overview[id];
+        const game = state.game[id];
+        const raw = state.raw[id];
+        const hasSignal = state.hasSignal[id];
+
+        moveDot(ui.dot, game);
+        ui.dotRaw.classList.toggle('is-hidden', !hasSignal);
+        if (hasSignal) moveDot(ui.dotRaw, rawToPad(raw));
+        ui.gameX.textContent = game.x.toFixed(2);
+        ui.gameY.textContent = game.y.toFixed(2);
+        ui.rawX.textContent = hasSignal ? raw.x : '–';
+        ui.rawY.textContent = hasSignal ? raw.y : '–';
+
+        ui.calibrated.textContent = hasSignal ? calibratedLabel(id) : 'No signal from the board';
+        ui.calibrated.classList.toggle('is-missing', hasSignal && !state.stored[id]);
+        ui.calibrated.classList.toggle('no-signal', !hasSignal);
+    });
+}
+
 function renderSteps() {
     const visibleSteps = STEPS.length - 1; // intro has no dot
     if (els.steps.children.length !== visibleSteps) {
@@ -266,22 +418,10 @@ function renderSteps() {
     });
 }
 
-function renderStatus() {
-    const id = currentJoystickId();
-    const stored = state.stored[id];
-    if (state.isDone) {
-        els.status.textContent = '';
-    } else if (stored && stored.createdAt) {
-        els.status.textContent = `Joystick ${id} last calibrated ${new Date(stored.createdAt).toLocaleString()}`;
-    } else {
-        els.status.textContent = `Joystick ${id} has never been calibrated (raw values are passed through)`;
-    }
-}
-
 // Rough live dot from raw values, relative to the draft centre and the travel seen so far.
 function rawDotPosition() {
     const step = currentStep();
-    if (step === 'intro' || step === 'center') return null;
+    if (step === 'intro' || step === 'center' || step === 'done') return null;
 
     const raw = state.raw[currentJoystickId()];
     const { center, min, max } = state.draft;
@@ -292,13 +432,13 @@ function rawDotPosition() {
     return { x, y: -y };
 }
 
-function render() {
+function renderCalibration() {
     const step = currentStep();
     const id = currentJoystickId();
     const texts = TEXTS[step];
     const raw = state.raw[id];
 
-    els.title.textContent = state.isDone ? 'Joystick calibration' : `Joystick ${id} calibration`;
+    els.status.textContent = state.isDone ? '' : `Joystick ${id}: ${calibratedLabel(id)}`;
     els.instruction.textContent = texts.instruction(id);
     els.hint.textContent = texts.hint;
     els.message.textContent = state.message;
@@ -306,22 +446,34 @@ function render() {
     els.rawY.textContent = state.hasSignal[id] ? raw.y : '–';
 
     renderSteps();
-    renderStatus();
 
     const isPreview = step === 'test' && state.preview;
     const pos = isPreview ? state.preview : rawDotPosition();
-    const radius = 15; // vh, half the pad minus the dot
     els.dot.classList.toggle('is-preview', Boolean(isPreview));
     els.dot.classList.toggle('is-hidden', !pos);
-    if (pos) els.dot.style.transform = `translate(${pos.x * radius}vh, ${-pos.y * radius}vh)`;
+    if (pos) moveDot(els.dot, pos);
 
-    els.preview.textContent = isPreview
-        ? `game x ${state.preview.x.toFixed(2)}  y ${state.preview.y.toFixed(2)}`
-        : '';
+    // Grey raw dot alongside the green preview during the test step.
+    const showRaw = Boolean(isPreview) && state.hasSignal[id];
+    els.dotRaw.classList.toggle('is-hidden', !showRaw);
+    if (showRaw) moveDot(els.dotRaw, rawToPad(raw));
 
-    els.controlALabel.textContent = step === 'intro' ? 'Start' : step === 'test' ? 'Save' : step === 'done' ? 'Back to menu' : 'Confirm';
-    els.controlX.classList.toggle('is-hidden', step === 'intro' || step === 'done');
-    els.controlS.classList.toggle('is-hidden', step !== 'intro');
+    els.previewRow.hidden = !isPreview;
+    if (isPreview) {
+        els.previewX.textContent = state.preview.x.toFixed(2);
+        els.previewY.textContent = state.preview.y.toFixed(2);
+    }
+}
+
+function render() {
+    const isOverview = state.view === 'overview';
+    els.viewOverview.hidden = !isOverview;
+    els.viewCalibration.hidden = isOverview;
+
+    if (isOverview) renderOverview();
+    else renderCalibration();
+
+    setInputs(inputsForState());
 }
 
 // ---------------------------------------------------------------------------
@@ -329,17 +481,28 @@ function render() {
 // ---------------------------------------------------------------------------
 
 Axis.addEventListener('keydown', (e) => {
+    if (state.view === 'overview') {
+        if (e.key === 'a') startCalibration();
+        return;
+    }
+
     if (e.key === 'a') confirm();
     if (e.key === 'x' && !state.isDone && currentStep() !== 'intro') restartJoystick();
     if (e.key === 's') skipJoystick();
 });
 
-// Live position through the real pipeline (draft applied in the main process).
+// Positions through the real pipeline: stored calibration on the overview,
+// the draft applied in the main process during the test step.
 JOYSTICK_IDS.forEach((id) => {
     Axis[`joystick${id}`].addEventListener('joystick:move', (e) => {
-        if (id !== currentJoystickId() || currentStep() !== 'test') return;
-        state.preview = { x: e.position.x, y: e.position.y };
-        render();
+        state.game[id] = { x: e.position.x, y: e.position.y };
+
+        if (state.view === 'overview') return render();
+
+        if (id === currentJoystickId() && currentStep() === 'test') {
+            state.preview = state.game[id];
+            render();
+        }
     });
 });
 
@@ -350,6 +513,7 @@ ipcRenderer.on('joystick:raw', (event, data) => {
     state.raw[id] = position;
     state.hasSignal[id] = true;
 
+    if (state.view === 'overview') return render();
     if (id !== currentJoystickId()) return;
 
     state.recentRaw.push(position);

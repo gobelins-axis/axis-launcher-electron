@@ -20,6 +20,10 @@ const Server = require('./modules/Server');
 
 const BAUD_RATE = 28800;
 
+// TEMP (dev only): open the joystick calibration tool instead of the menu at
+// startup. Set back to false before shipping.
+const OPEN_CALIBRATION_ON_START = true;
+
 function start(arduinoPort) {
     const windowManager = new WindowManager({
         url: 'https://axis-launcher.netlify.app',
@@ -69,7 +73,12 @@ function start(arduinoPort) {
     }
 
     leaderboardProxy.start();
-    windowManager.start();
+
+    if (OPEN_CALIBRATION_ON_START) {
+        calibrationManager.open();
+    } else {
+        windowManager.start();
+    }
 }
 
 app.whenReady().then(() => {
