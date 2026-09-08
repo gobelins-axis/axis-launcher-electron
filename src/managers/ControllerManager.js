@@ -38,7 +38,6 @@ class ControllerManager {
             const key = item.split(':')[0];
             const value = item.split(':')[1];
             if (key !== undefined && value !== undefined) newData[key] = value;
-            console.log({ key, value });
         });
         return newData;
     }
@@ -145,12 +144,6 @@ class ControllerManager {
         this._trackCalibrationCombo(data.key, id, data.state);
 
         this._window.webContents.send(data.state, {
-            key: data.key,
-            id,
-        });
-
-        console.log({
-            state: data.state,
             key: data.key,
             id,
         });
