@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Joystick calibration</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+            cursor: none;
+            user-select: none;
+        }
+
+        .layout {
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 6vh 8vw;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.2vh;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        .status {
+            margin-top: 1vh;
+            font-size: 1.8vh;
+            opacity: 0.45;
+            min-height: 2.2vh;
+        }
+
+        .steps {
+            margin-top: 1.5vh;
+            display: flex;
+            justify-content: center;
+            gap: 1vh;
+        }
+
+        .steps span {
+            width: 1.4vh;
+            height: 1.4vh;
+            border-radius: 50%;
+            background: #333;
+        }
+
+        .steps span.is-done { background: #4caf50; }
+        .steps span.is-current { background: #fff; }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4vh;
+        }
+
+        .instruction {
+            font-size: 5vh;
+            font-weight: 600;
+            line-height: 1.25;
+            max-width: 70vw;
+        }
+
+        .hint {
+            font-size: 2.6vh;
+            opacity: 0.7;
+        }
+
+        .message {
+            font-size: 2.6vh;
+            color: #ffb74d;
+            min-height: 3.5vh;
+        }
+
+        .pad {
+            position: relative;
+            width: 34vh;
+            height: 34vh;
+            border: 2px solid #333;
+            border-radius: 50%;
+        }
+
+        .pad::before,
+        .pad::after {
+            content: "";
+            position: absolute;
+            background: #222;
+        }
+
+        .pad::before { left: 50%; top: 0; width: 1px; height: 100%; }
+        .pad::after { top: 50%; left: 0; height: 1px; width: 100%; }
+
+        .dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 4vh;
+            height: 4vh;
+            margin: -2vh 0 0 -2vh;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        .dot.is-preview { background: #4caf50; }
+        .dot.is-hidden { opacity: 0; }
+
+        .values {
+            font-family: "SF Mono", Menlo, monospace;
+            font-size: 2vh;
+            opacity: 0.6;
+            display: flex;
+            gap: 4vw;
+            justify-content: center;
+            min-height: 2.5vh;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 4vw;
+            font-size: 2.4vh;
+            opacity: 0.8;
+        }
+
+        .controls span.is-hidden { display: none; }
+
+        .controls b {
+            display: inline-block;
+            min-width: 4.5vh;
+            padding: 0.6vh 1vh;
+            margin-right: 0.8vh;
+            border: 2px solid #fff;
+            border-radius: 0.8vh;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <header>
+            <div class="title js-title">Joystick calibration</div>
+            <div class="status js-status"></div>
+            <div class="steps js-steps"></div>
+        </header>
+
+        <main class="main">
+            <div class="instruction js-instruction"></div>
+            <div class="hint js-hint"></div>
+
+            <div class="pad">
+                <div class="dot js-dot"></div>
+            </div>
+
+            <div class="values">
+                <span>raw x <span class="js-raw-x">–</span></span>
+                <span>raw y <span class="js-raw-y">–</span></span>
+                <span class="js-preview"></span>
+            </div>
+
+            <div class="message js-message"></div>
+        </main>
+
+        <footer class="controls">
+            <span class="js-control-a"><b>A</b> <span class="js-control-a-label">Confirm</span></span>
+            <span class="js-control-x"><b>X</b> Restart this joystick</span>
+            <span class="js-control-s"><b>S</b> Skip this joystick</span>
+            <span><b>Home</b> Exit</span>
+        </footer>
+    </div>
+
+    <!--
+        Runs inside the launcher window (nodeIntegration on), so axis-api is
+        loaded with require like the main process does, and the preload finds
+        window.__axis__ just as it would on a game page.
+    -->
+    <script src="./calibration.js"></script>
+</body>
+</html>

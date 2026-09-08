@@ -1,6 +1,8 @@
 const RESTART_TIMEOUT = 5000;
 const INACTIVITY_TIMEOUT = 60000 * 10; // 10 Minutes
 const JOYSTICK_INACTIVITY_THRESHOLD = 5;
+// Hold W and S of the same controller this long to open the joystick calibration page.
+const CALIBRATION_COMBO_TIMEOUT = 3000;
 
 class ControllerManager {
     constructor(options = {}) {
@@ -9,6 +11,7 @@ class ControllerManager {
         this._serialPort = options.serialPort;
         this._parser = options.parser;
         this._windowManager = options.windowManager;
+        this._calibrationManager = options.calibrationManager;
         this._window = this._windowManager.window;
 
         // Setup
@@ -16,6 +19,8 @@ class ControllerManager {
         this._joystickSignal2 = {};
         this._isRestarting = false;
         this._isInactive = false;
+        this._pressedKeys = {};
+        this._calibrationComboTimeouts = {};
 
         this._bindAll();
         this._setupEventListeners();
@@ -33,7 +38,7 @@ class ControllerManager {
             const key = item.split(':')[0];
             const value = item.split(':')[1];
             if (key !== undefined && value !== undefined) newData[key] = value;
-            console.log({ key, value })
+            console.log({ key, value });
         });
         return newData;
     }
@@ -56,6 +61,25 @@ class ControllerManager {
         this._alternativeAnalogMessageReceivedHandler = this._alternativeAnalogMessageReceivedHandler.bind(this);
     }
 
+    _trackCalibrationCombo(key, id, state) {
+        if (!this._calibrationManager) return;
+        if (key !== 'w' && key !== 's') return;
+
+        const bothPressed = this._pressedKeys[`w:${id}`] && this._pressedKeys[`s:${id}`];
+
+        if (state === 'keydown' && bothPressed && !this._calibrationComboTimeouts[id]) {
+            this._calibrationComboTimeouts[id] = setTimeout(() => {
+                delete this._calibrationComboTimeouts[id];
+                this._calibrationManager.open();
+            }, CALIBRATION_COMBO_TIMEOUT);
+        }
+
+        if (state === 'keyup' && this._calibrationComboTimeouts[id]) {
+            clearTimeout(this._calibrationComboTimeouts[id]);
+            delete this._calibrationComboTimeouts[id];
+        }
+    }
+
     _setupEventListeners() {
         this._parser.on('data', this._messageReceivedHandler);
     }
@@ -70,57 +94,66 @@ class ControllerManager {
     }
 
     _joystickMessageReceivedHandler(data) {
-        this._window.webContents.send('joystick:move', {
-            id: parseInt(data.id),
-            position: {
-                x: parseInt(data.x),
-                y: parseInt(data.y),
-            },
-        });
+        const id = parseInt(data.id);
+        const raw = { x: parseInt(data.x), y: parseInt(data.y) };
 
-        if (parseInt(data.id) === 1) {
-            const deltaX = parseInt(data.x) - this._joystickSignal1.x;
-            const deltaY = parseInt(data.y) - this._joystickSignal1.y;
+        // Raw board values -> the legacy range every game bundle expects.
+        // Pass-through until the joystick has been calibrated.
+        const position = this._calibrationManager ? this._calibrationManager.map(id, raw) : raw;
+
+        this._window.webContents.send('joystick:move', { id, position });
+        // Unmapped values, used by the calibration page only.
+        this._window.webContents.send('joystick:raw', { id, position: raw });
+
+        if (id === 1) {
+            const deltaX = position.x - this._joystickSignal1.x;
+            const deltaY = position.y - this._joystickSignal1.y;
 
             if (Math.abs(deltaX) > JOYSTICK_INACTIVITY_THRESHOLD || Math.abs(deltaY) > JOYSTICK_INACTIVITY_THRESHOLD) {
                 this._poke();
             }
 
-            this._joystickSignal1 = { x: parseInt(data.x), y: parseInt(data.y) };
+            this._joystickSignal1 = position;
         }
 
-        if (parseInt(data.id) === 2) {
-            const deltaX = parseInt(data.x) - this._joystickSignal2.x;
-            const deltaY = parseInt(data.y) - this._joystickSignal2.y;
+        if (id === 2) {
+            const deltaX = position.x - this._joystickSignal2.x;
+            const deltaY = position.y - this._joystickSignal2.y;
 
             if (Math.abs(deltaX) > JOYSTICK_INACTIVITY_THRESHOLD || Math.abs(deltaY) > JOYSTICK_INACTIVITY_THRESHOLD) {
                 this._poke();
             }
 
-            this._joystickSignal2 = { x: parseInt(data.x), y: parseInt(data.y) };
+            this._joystickSignal2 = position;
         }
     }
 
     _buttonMessageReceivedHandler(data) {
+        const id = parseInt(data.id);
+
+        this._poke();
+
+        if (data.state === 'keydown') this._pressedKeys[`${data.key}:${id}`] = true;
+        if (data.state === 'keyup') delete this._pressedKeys[`${data.key}:${id}`];
+        this._trackCalibrationCombo(data.key, id, data.state);
+
         this._window.webContents.send(data.state, {
             key: data.key,
-            id: parseInt(data.id),
+            id,
         });
 
         console.log({
             state: data.state,
             key: data.key,
-            id: parseInt(data.id)
+            id,
         });
-
-        this._poke();
     }
 
     _buttonHomeMessageReceivedHandler(data) {
+        this._poke();
+
         if (data.state === 'keydown') this._buttonHomeKeydownHandler(data);
         if (data.state === 'keyup') this._buttonHomeKeyupHandler(data);
-
-        this._poke();
     }
 
     _alternativeAnalogMessageReceivedHandler(data) {

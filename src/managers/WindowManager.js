@@ -54,6 +54,17 @@ class WindowManager {
     }
 
     /**
+     * Loads a page in the main window the same way a game is loaded
+     * (used by the menu through IPC and by the launcher itself for the
+     * calibration page).
+     */
+    openUrl(url) {
+        if (url === this._url) return;
+        this._url = url;
+        this._window.loadURL(this._url);
+    }
+
+    /**
      * Private
      */
     _createWindow() {
@@ -108,9 +119,7 @@ class WindowManager {
     }
 
     _urlUpdateHandler(event, data) {
-        if (data.url === this._url) return;
-        this._url = data.url;
-        this._window.loadURL(this._url);
+        this.openUrl(data.url);
     }
 
     _exitGameHandler() {

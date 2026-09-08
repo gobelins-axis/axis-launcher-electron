@@ -8,6 +8,7 @@ const { ReadlineParser } = require('@serialport/parser-readline');
 // Managers
 const WindowManager = require('./managers/WindowManager');
 const ControllerManager = require('./managers/ControllerManager');
+const CalibrationManager = require('./managers/CalibrationManager');
 // const LedManager = require('./managers/LedManager');
 
 // Modules
@@ -18,13 +19,12 @@ const LeaderboardProxy = require('./modules/LeaderboardProxy');
 const Server = require('./modules/Server');
 
 const BAUD_RATE = 28800;
-//const BAUD_RATE = 115200;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
-         url: 'https://axis-launcher.netlify.app',
+        url: 'https://axis-launcher.netlify.app',
         // url: 'http://localhost:8000',
-        //url: 'http://localhost:8080',
+        // url: 'http://localhost:8080',
         // url: 'http://localhost:3003',
         width: 950,
         height: 950,
@@ -36,6 +36,10 @@ function start(arduinoPort) {
 
     const leaderboardProxy = new LeaderboardProxy();
 
+    // Joystick calibration page + per-machine storage (see src/calibration).
+    // Created even without a board so the page can be opened for UI work.
+    const calibrationManager = new CalibrationManager({ windowManager });
+
     if (arduinoPort) {
         const serialPort = new SerialPort({ path: arduinoPort, baudRate: BAUD_RATE });
         const parser = serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
@@ -45,6 +49,7 @@ function start(arduinoPort) {
             serialPort,
             parser,
             windowManager,
+            calibrationManager,
         });
 
         // const ledManager = new LedManager({

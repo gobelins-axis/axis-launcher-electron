@@ -64,6 +64,19 @@ To make it a bit easier we created an Automator App named "Axis Launcher Helper"
 
 Build the Application, import it to the Axis Machine application folder under the name axis-launcher.app. Make sure that no older version is still on the Axis machine. To test your updates, just launch the "Axis Launcher Helper" application (explained above).
 
+## Joystick calibration
+
+The board sends raw analog values. The launcher converts them, in `src/managers/ControllerManager.js`, to the range every game expects from `axis-api` (`x` 18..840, `y` 36..867), using a per-machine calibration. Until a joystick has been calibrated its values are passed through unchanged.
+
+The calibration tool is a page shipped with the launcher (`src/calibration`) and loaded in the main window like a game. It walks through joystick 1 then 2 (a stick that is not wired can be skipped), using the arcade buttons: **A** confirm, **X** restart the current joystick, **S** skip, **Home** exit like any game.
+
+Open it either by:
+
+-   holding **W and S** of the same controller for 3 seconds,
+-   or, from the menu web app, sending the IPC message `calibration:open` (`ipcRenderer.send('calibration:open')`).
+
+The result is stored in the app's user data folder as `joystick-calibration.json` (on macOS: `~/Library/Application Support/axis-launcher/`). Delete that file to go back to pass-through.
+
 ## Authors
 
 [@LPGeneret](https://twitter.com/LPGeneret)
