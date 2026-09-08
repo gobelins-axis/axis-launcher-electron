@@ -1,4 +1,6 @@
 // Vendor
+const path = require('path');
+const { pathToFileURL } = require('url');
 const { app } = require('electron');
 const { ipcMain } = require('electron');
 const { getArduinoBoardPort } = require('utils');
@@ -9,20 +11,22 @@ const { ReadlineParser } = require('@serialport/parser-readline');
 const WindowManager = require('./managers/WindowManager');
 const ControllerManager = require('./managers/ControllerManager');
 const CalibrationManager = require('./managers/CalibrationManager');
-// const LedManager = require('./managers/LedManager');
+const LedManager = require('./managers/LedManager');
 
 // Modules
 const Mouse = require('./modules/Mouse');
 const LeaderboardProxy = require('./modules/LeaderboardProxy');
 
-// TPM
-const Server = require('./modules/Server');
-
 const BAUD_RATE = 28800;
 
-// TEMP (dev only): open the joystick calibration tool instead of the menu at
-// startup. Set back to false before shipping.
+// TEMP (dev only): open a tool instead of the menu at startup. Set both back to
+// false before shipping. Calibration wins if both are true.
 const OPEN_CALIBRATION_ON_START = true;
+const OPEN_LED_DEBUG_ON_START = false;
+
+// LED debug page (src/led-debug), loaded like a game. Only reachable through
+// the toggle above, on purpose.
+const LED_DEBUG_URL = pathToFileURL(path.join(__dirname, 'led-debug/index.html')).href;
 
 function start(arduinoPort) {
     const windowManager = new WindowManager({
@@ -56,26 +60,22 @@ function start(arduinoPort) {
             calibrationManager,
         });
 
-        // const ledManager = new LedManager({
-        //     serialPort,
-        //     parser,
-        // });
-
-        const mouse = new Mouse();
-
-        // TPM : Start local server
-        const server = new Server({
-            window: windowManager.window,
+        // LEDs: forwards axis-api's per-pixel lines to the board, clears on navigation.
+        const ledManager = new LedManager({
             serialPort,
+            parser,
+            windowManager,
         });
 
-        // ledManager.start();
+        const mouse = new Mouse();
     }
 
     leaderboardProxy.start();
 
     if (OPEN_CALIBRATION_ON_START) {
         calibrationManager.open();
+    } else if (OPEN_LED_DEBUG_ON_START) {
+        windowManager.openUrl(LED_DEBUG_URL);
     } else {
         windowManager.start();
     }

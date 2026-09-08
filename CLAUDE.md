@@ -15,14 +15,16 @@ calibration tool. The cross-repo picture and the shared contracts are in
 
 ## Architecture (`src/`)
 
-- `main.js`: wires everything. `OPEN_CALIBRATION_ON_START` is a **temporary dev toggle** that opens the calibration page instead of the menu; set it back to `false` before shipping.
+- `main.js`: wires everything. `OPEN_CALIBRATION_ON_START` and `OPEN_LED_DEBUG_ON_START` are **temporary dev toggles** that open a tool page instead of the menu; set both back to `false` before shipping.
+- `led-debug/`: LED debug page, loaded like a game and reachable only through its toggle. Drives LEDs exclusively through axis-api (button echo while held, W1-held sweep of both side strips cycling red/green/blue) so it exercises the same chain as a game. Needs an axis-api build with the LED API (`npm install github:gobelins-axis/axis-api` under the pinned Node 16) and the `V6-LED` firmware. Reuses the calibration page's fonts and icons.
 - `managers/WindowManager.js`: one fullscreen BrowserWindow. `openUrl(url)` loads a page like a game (also used by `url:changed` IPC); `exit` IPC and sleep reload the menu URL.
 - `managers/ControllerManager.js`: parses serial lines (`type:...__key:...` split on `__` and `:`), forwards `keydown`/`keyup`/`joystick:move`/`home:keyup`, handles inactivity sleep and the Home long-press relaunch. Maps every joystick message through the calibration before sending, and also emits `joystick:raw`. Holding W+S of one controller for 3 s **on the menu only** opens the calibration page.
 - `managers/CalibrationManager.js`: owns the stored calibration and the IPC surface (`calibration:open`, `calibration:get`, `calibration:apply`, `calibration:save`, `calibration:discard`). Drafts applied for preview are dropped whenever the window navigates away from the calibration page.
 - `modules/JoystickCalibration.js`: pure mapping. Raw board values → -1..1 using centre/min/max per raw axis plus axis assignment and sign → the **legacy range games expect** (`x` 18..840, `y` 36..867, y inverted). Pass-through until calibrated. Storage: `app.getPath('userData')/joystick-calibration.json` (`~/Library/Application Support/axis-launcher/`), per machine and per macOS user. Pure enough to unit-test with plain Node.
 - `calibration/`: the calibration tool page, loaded like a game (`file://` URL). Uses axis-api for buttons and the standard Home/exit flow, `ipcRenderer` directly for the raw stream and the calibration messages. Overview of both joysticks first (white dot = what games see, grey = raw), then per-joystick steps: rest centre, rotate for range, push right, push up (detects axis mapping and direction), live test through the real pipeline, save. Ships its own fonts (`fonts/`, the front's Darker Grotesque TTFs) and icons (`icons/`) so it works offline and inside the packaged app.
-- `modules/Server.js`: local Express server on port 9999 used by the presentation ("TPM") flow to send `buildup1`/`buildup2`/`reveal`/`start` to the page and the board. Not for anything else; do not add HTTP routes for app features, use IPC.
+- `managers/LedManager.js`: pass-through for axis-api's `led:set` lines (`strip;index;r,g,b`, frozen format) to the board, plus hygiene: sends `type:led__cmd:clear` whenever the window starts loading a page, when the board announces `type:ready`, and on an `led:clear` IPC. Requires the `V6-LED` firmware to have a visible effect.
 - `modules/Mouse.js` (robotjs, joystick-as-mouse), `modules/LeaderboardProxy.js`, Firebase modules: untouched, pre-existing.
+- There is no HTTP server anymore. The old Express server on port 9999 (release-party LED animations) was removed in September 2026; talk to the app over IPC only.
 
 ## Rules
 
