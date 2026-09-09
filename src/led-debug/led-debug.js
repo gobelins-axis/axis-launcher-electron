@@ -10,9 +10,11 @@
 //
 // Behaviours:
 //   - Button echo: every controller button lights its own LED while held.
-//   - Strip sweep: while W of controller 1 is held, the left and right strips
-//     light up one LED at a time; at the end the sweep restarts from the top
-//     with the next colour: red, green, blue, red...
+//   - Strip sweep: while W of controller 1 is held, the left strip lights up
+//     one LED at a time; W of controller 2 does the same on the right strip.
+//     At the end a sweep restarts from the top with the next colour: red,
+//     green, blue, red... Each strip has its own sweep, so a strip lighting
+//     when the other controller's W is held points at a wiring swap.
 
 const { ipcRenderer } = require('electron');
 const Axis = require('axis-api').default;
@@ -24,7 +26,12 @@ const Axis = require('axis-api').default;
 const ECHO_COLOR = 'white';
 const OFF_COLOR = 'black';
 
-const SWEEP_BUTTON = { key: 'w', id: 1 };
+// Which controller's W drives which strip.
+const SWEEP_BUTTONS = {
+    left: { key: 'w', id: 1 },
+    right: { key: 'w', id: 2 },
+};
+const SIDES = Object.keys(SWEEP_BUTTONS);
 const SWEEP_COLORS = [
     { name: 'red', css: 'rgb(255, 0, 0)' },
     { name: 'green', css: 'rgb(0, 255, 0)' },
@@ -57,31 +64,41 @@ const strips = {
     right: Axis.ledManager.getLedGroupByName('right-strip'),
 };
 
-const stripLength = Math.min(strips.left.leds.length, strips.right.leds.length);
-
-const state = {
-    held: {}, // "key:id" -> true while pressed
-    sweep: {
+function createSweep(length) {
+    return {
         running: false,
+        timer: null,
         index: 0, // next LED to light
         colorIndex: 0,
         passes: 0,
-        cells: new Array(stripLength).fill(null), // colour name per LED, mirrors the strips
+        cells: new Array(length).fill(null), // colour name per LED, mirrors the strip
+    };
+}
+
+const state = {
+    held: {}, // "key:id" -> true while pressed
+    sweeps: {
+        left: createSweep(strips.left.leds.length),
+        right: createSweep(strips.right.leds.length),
     },
     sent: 0, // LED commands issued, for the footer counter
 };
 
-let sweepTimer = null;
-
 const els = {
     buttons: {},
     cells: { left: [], right: [] },
-    sweepStatus: document.querySelector('.js-sweep-status'),
-    sweepColor: document.querySelector('.js-sweep-color'),
-    sweepIndex: document.querySelector('.js-sweep-index'),
-    sweepPasses: document.querySelector('.js-sweep-passes'),
+    sweeps: {},
     sent: document.querySelector('.js-sent'),
 };
+
+SIDES.forEach((side) => {
+    els.sweeps[side] = {
+        status: document.querySelector(`.js-sweep-status-${side}`),
+        color: document.querySelector(`.js-sweep-color-${side}`),
+        index: document.querySelector(`.js-sweep-index-${side}`),
+        passes: document.querySelector(`.js-sweep-passes-${side}`),
+    };
+});
 
 // ---------------------------------------------------------------------------
 // DOM
@@ -115,9 +132,9 @@ function buildButtons() {
 }
 
 function buildStrips() {
-    ['left', 'right'].forEach((side) => {
+    SIDES.forEach((side) => {
         const bar = document.querySelector(`.js-strip-${side}`);
-        for (let i = 0; i < stripLength; i++) {
+        for (let i = 0; i < strips[side].leds.length; i++) {
             const cell = document.createElement('span');
             cell.className = 'cell';
             bar.appendChild(cell);
@@ -131,20 +148,24 @@ function render() {
         els.buttons[id].classList.toggle('is-held', Boolean(state.held[id]));
     });
 
-    const { sweep } = state;
-    for (let i = 0; i < stripLength; i++) {
-        const color = sweep.cells[i];
-        ['left', 'right'].forEach((side) => {
+    SIDES.forEach((side) => {
+        const sweep = state.sweeps[side];
+        const length = sweep.cells.length;
+
+        for (let i = 0; i < length; i++) {
+            const color = sweep.cells[i];
             const cell = els.cells[side][i];
             cell.style.background = color ? SWEEP_COLORS.find((c) => c.name === color).css : '';
             cell.classList.toggle('is-next', sweep.running && i === sweep.index);
-        });
-    }
+        }
 
-    els.sweepStatus.textContent = sweep.running ? 'Sweeping' : 'Paused, hold W on controller 1';
-    els.sweepColor.textContent = SWEEP_COLORS[sweep.colorIndex].name;
-    els.sweepIndex.textContent = `${sweep.index} / ${stripLength}`;
-    els.sweepPasses.textContent = String(sweep.passes);
+        const ui = els.sweeps[side];
+        ui.status.textContent = sweep.running ? 'Sweeping' : `Paused, hold W on controller ${SWEEP_BUTTONS[side].id}`;
+        ui.color.textContent = SWEEP_COLORS[sweep.colorIndex].name;
+        ui.index.textContent = `${sweep.index} / ${length}`;
+        ui.passes.textContent = String(sweep.passes);
+    });
+
     els.sent.textContent = String(state.sent);
 }
 
@@ -159,21 +180,20 @@ function setButtonLed(key, id, color) {
     state.sent++;
 }
 
-function setStripLed(index, color) {
-    strips.left.leds[index].setColor(color);
-    strips.right.leds[index].setColor(color);
-    state.sent += 2;
+function setStripLed(side, index, color) {
+    strips[side].leds[index].setColor(color);
+    state.sent++;
 }
 
-function sweepStep() {
-    const { sweep } = state;
+function sweepStep(side) {
+    const sweep = state.sweeps[side];
     const color = SWEEP_COLORS[sweep.colorIndex];
 
-    setStripLed(sweep.index, color.css);
+    setStripLed(side, sweep.index, color.css);
     sweep.cells[sweep.index] = color.name;
     sweep.index++;
 
-    if (sweep.index >= stripLength) {
+    if (sweep.index >= sweep.cells.length) {
         // End of the strip: restart from the top with the next colour,
         // overwriting the previous pass LED by LED.
         sweep.index = 0;
@@ -184,20 +204,27 @@ function sweepStep() {
     render();
 }
 
-function startSweep() {
-    if (state.sweep.running) return;
-    state.sweep.running = true;
-    sweepStep();
-    sweepTimer = setInterval(sweepStep, SWEEP_STEP_MS);
+function startSweep(side) {
+    const sweep = state.sweeps[side];
+    if (sweep.running) return;
+    sweep.running = true;
+    sweepStep(side);
+    sweep.timer = setInterval(() => sweepStep(side), SWEEP_STEP_MS);
     render();
 }
 
-function pauseSweep() {
-    if (!state.sweep.running) return;
-    state.sweep.running = false;
-    clearInterval(sweepTimer);
-    sweepTimer = null;
+function pauseSweep(side) {
+    const sweep = state.sweeps[side];
+    if (!sweep.running) return;
+    sweep.running = false;
+    clearInterval(sweep.timer);
+    sweep.timer = null;
     render();
+}
+
+// The strip whose sweep button matches this event, if any.
+function sweepSideFor(e) {
+    return SIDES.find((side) => SWEEP_BUTTONS[side].key === e.key && SWEEP_BUTTONS[side].id === e.id);
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +235,8 @@ Axis.addEventListener('keydown', (e) => {
     state.held[`${e.key}:${e.id}`] = true;
     setButtonLed(e.key, e.id, ECHO_COLOR);
 
-    if (e.key === SWEEP_BUTTON.key && e.id === SWEEP_BUTTON.id) startSweep();
+    const side = sweepSideFor(e);
+    if (side) startSweep(side);
 
     render();
 });
@@ -217,7 +245,8 @@ Axis.addEventListener('keyup', (e) => {
     delete state.held[`${e.key}:${e.id}`];
     setButtonLed(e.key, e.id, OFF_COLOR);
 
-    if (e.key === SWEEP_BUTTON.key && e.id === SWEEP_BUTTON.id) pauseSweep();
+    const side = sweepSideFor(e);
+    if (side) pauseSweep(side);
 
     render();
 });
@@ -225,7 +254,7 @@ Axis.addEventListener('keyup', (e) => {
 // The launcher clears the strips when the page unloads; stop the timer so no
 // command is issued after that.
 window.addEventListener('beforeunload', () => {
-    pauseSweep();
+    SIDES.forEach(pauseSweep);
     ipcRenderer.send('led:clear');
 });
 
