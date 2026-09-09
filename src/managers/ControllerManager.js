@@ -1,3 +1,6 @@
+// Utils
+const parseMessage = require('../utils/parseMessage');
+
 const RESTART_TIMEOUT = 5000;
 const INACTIVITY_TIMEOUT = 60000 * 10; // 10 Minutes
 const JOYSTICK_INACTIVITY_THRESHOLD = 5;
@@ -28,21 +31,16 @@ class ControllerManager {
     }
 
     /**
-     * Private
+     * Public
      */
-    _getMessageData(data) {
-        const newData = {};
-        const rows = data.split('__');
-
-        rows.forEach(item => {
-            const key = item.split(':')[0];
-            const value = item.split(':')[1];
-            if (key !== undefined && value !== undefined) newData[key] = value;
-            console.log({ key, value });
-        });
-        return newData;
+    // Any input keeps the machine awake; alternative controllers call this too.
+    poke() {
+        this._poke();
     }
 
+    /**
+     * Private
+     */
     _poke() {
         clearTimeout(this._inactivityTimeout);
         this._inactivityTimeout = setTimeout(this._inactivityTimeoutHandler, INACTIVITY_TIMEOUT);
@@ -92,7 +90,7 @@ class ControllerManager {
     }
 
     _messageReceivedHandler(data) {
-        const messageData = this._getMessageData(data);
+        const messageData = parseMessage(data);
 
         if (messageData.type === 'joystick') this._joystickMessageReceivedHandler(messageData);
         if (messageData.type === 'button') this._buttonMessageReceivedHandler(messageData);
@@ -164,7 +162,7 @@ class ControllerManager {
     }
 
     _alternativeAnalogMessageReceivedHandler(data) {
-        this._window.webContents.send('altenative:move', {
+        this._window.webContents.send('alternative:move', {
             id: parseInt(data.id),
             position: parseInt(data.position),
         });
