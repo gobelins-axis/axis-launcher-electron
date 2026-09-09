@@ -179,7 +179,9 @@
             font-variant-numeric: tabular-nums;
         }
 
-        .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* flex: none, otherwise lines that do not fit get shrunk to slivers
+           instead of being clipped at the top by the panel. */
+        .log-line { flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .log-line .path { color: var(--grey); margin-right: 0.8rem; }
 
         /* Inputs, front pattern */
