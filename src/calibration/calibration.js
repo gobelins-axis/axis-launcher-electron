@@ -41,8 +41,8 @@ const TEXTS = {
         hint: 'Do not touch it, then press A',
     },
     range: {
-        instruction: (id) => `Rotate joystick ${id} slowly along its outer edge`,
-        hint: 'Two or three full turns, pushing all the way out, then press A',
+        instruction: (id) => `Make two or three wide circles with joystick ${id}`,
+        hint: 'Then press A',
     },
     right: {
         instruction: (id) => `Push joystick ${id} fully to the right`,
@@ -292,7 +292,7 @@ function confirmRange() {
     const spanB = state.draft.max.b - state.draft.min.b;
 
     if (spanA < MIN_RANGE_SPAN || spanB < MIN_RANGE_SPAN) {
-        state.message = 'Not enough travel recorded, keep rotating the joystick to its limits';
+        state.message = 'Not enough travel recorded. Keep the stick tilted all the way and make a few more circles, then press A';
         return render();
     }
 
@@ -418,12 +418,15 @@ function renderSteps() {
     });
 }
 
-// Rough live dot from raw values, relative to the draft centre and the travel seen so far.
+// Live dot from raw values. Before a centre has been captured (intro, centre,
+// done) it is the plain raw mapping; afterwards it is relative to the draft
+// centre and the travel seen so far, so the user sees the calibration forming.
 function rawDotPosition() {
     const step = currentStep();
-    if (step === 'intro' || step === 'center' || step === 'done') return null;
-
     const raw = state.raw[currentJoystickId()];
+    if (!state.hasSignal[currentJoystickId()]) return null;
+    if (step === 'intro' || step === 'center' || step === 'done') return rawToPad(raw);
+
     const { center, min, max } = state.draft;
     const spanA = Math.max(1, (max.a - min.a) / 2);
     const spanB = Math.max(1, (max.b - min.b) / 2);
@@ -453,8 +456,9 @@ function renderCalibration() {
     els.dot.classList.toggle('is-hidden', !pos);
     if (pos) moveDot(els.dot, pos);
 
-    // Grey raw dot alongside the green preview during the test step.
-    const showRaw = Boolean(isPreview) && state.hasSignal[id];
+    // Grey raw dot at every step, so the board signal is always visible even
+    // when the white dot is relative to the calibration being built.
+    const showRaw = state.hasSignal[id];
     els.dotRaw.classList.toggle('is-hidden', !showRaw);
     if (showRaw) moveDot(els.dotRaw, rawToPad(raw));
 
