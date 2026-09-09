@@ -40,7 +40,7 @@ const STATE_CLOSED = 'closed';
  * IPC (main -> renderer):
  *   alternative:connected     { slot, name, version, path }
  *   alternative:disconnected  { slot, name, path }
- *   alternative:message       { slot, name, data }   data = fields minus `type`
+ *   alternative:message       { slot, name, data }   data = fields minus `type`, plus `controller` (the name)
  *   alternative:raw           { path, line }         every line, for the debug page
  * IPC (renderer -> main):
  *   alternative:list          invoke -> [{ path, state, slot, name, version, ...usb ids }]
@@ -200,7 +200,10 @@ class AlternativeControllerManager {
         // Input on any controller keeps the machine awake.
         if (this._controllerManager) this._controllerManager.poke();
 
-        const { type, ...payload } = data;
+        // The board's fields, plus its name so a game can tell controllers
+        // apart from the data alone (the launcher's value wins over the board's).
+        const { type, ...fields } = data;
+        const payload = { ...fields, controller: entry.name };
         this._send('alternative:message', { slot: entry.slot, name: entry.name, data: payload });
     }
 
