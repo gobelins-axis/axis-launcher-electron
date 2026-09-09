@@ -21,7 +21,7 @@ const BAUD_RATE = 28800;
 
 // TEMP (dev only): open a tool instead of the menu at startup. Set both back to
 // false before shipping. Calibration wins if both are true.
-const OPEN_CALIBRATION_ON_START = true;
+const OPEN_CALIBRATION_ON_START = false;
 const OPEN_LED_DEBUG_ON_START = false;
 
 // LED debug page (src/led-debug), loaded like a game. Only reachable through
