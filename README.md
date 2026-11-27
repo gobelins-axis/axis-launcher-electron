@@ -68,12 +68,7 @@ Build the Application, import it to the Axis Machine application folder under th
 
 The board sends raw analog values. The launcher converts them, in `src/managers/ControllerManager.js`, to the range every game expects from `axis-api` (`x` 18..840, `y` 36..867), using a per-machine calibration. Until a joystick has been calibrated its values are passed through unchanged.
 
-The calibration tool is a page shipped with the launcher (`src/calibration`) and loaded in the main window like a game. It walks through joystick 1 then 2 (a stick that is not wired can be skipped), using the arcade buttons: **A** confirm, **X** restart the current joystick, **S** skip, **Home** exit like any game.
-
-Open it either by:
-
--   holding **W and S** of the same controller for 3 seconds,
--   or, from the menu web app, sending the IPC message `calibration:open` (`ipcRenderer.send('calibration:open')`).
+The calibration tool is part of [axis-tools](https://github.com/gobelins-axis/axis-tools), a site launched from the menu like a game. The launcher keeps the stored calibration and answers the page over IPC (`calibration:get`, `calibration:apply`, `calibration:save`, `calibration:discard`, see `src/managers/CalibrationManager.js`).
 
 The result is stored in the app's user data folder as `joystick-calibration.json` (on macOS: `~/Library/Application Support/axis-launcher/`). Delete that file to go back to pass-through.
 
