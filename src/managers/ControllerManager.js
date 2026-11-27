@@ -146,12 +146,6 @@ class ControllerManager {
             key: data.key,
             id,
         });
-
-        console.log({
-            state: data.state,
-            key: data.key,
-            id,
-        });
     }
 
     _buttonHomeMessageReceivedHandler(data) {

@@ -129,7 +129,7 @@
 
         /* Strip sweep */
         .strip {
-            margin-bottom: 1rem;
+            margin-bottom: 1.6rem;
         }
 
         .strip-name {
@@ -164,7 +164,7 @@
             line-height: 1.3;
             color: var(--light-grey);
             font-variant-numeric: tabular-nums;
-            margin-top: 1rem;
+            margin-top: 0.6rem;
         }
 
         .sweep-values dt { color: var(--grey); }
@@ -209,7 +209,7 @@
         <main class="view">
             <div class="heading">
                 <h1 class="title">LED check</h1>
-                <p class="description">Hold any button to light its LED. Hold W on controller 1 to sweep the side strips one LED at a time, in red, then green, then blue. Every light goes through axis-api, like in a game.</p>
+                <p class="description">Hold any button to light its LED. Hold W on controller 1 to sweep the left strip one LED at a time, W on controller 2 for the right strip, in red, then green, then blue. Every light goes through axis-api, like in a game.</p>
             </div>
 
             <div class="panels">
@@ -229,20 +229,26 @@
                 <section>
                     <h2 class="panel-title">Side strips</h2>
                     <div class="strip">
-                        <div class="strip-name">Left strip</div>
+                        <div class="strip-name">Left strip, W on controller 1</div>
                         <div class="strip-bar js-strip-left"></div>
+                        <dl class="sweep-values">
+                            <dt>Status</dt><dd class="js-sweep-status-left"></dd>
+                            <dt>Colour</dt><dd class="js-sweep-color-left"></dd>
+                            <dt>Next LED</dt><dd class="js-sweep-index-left"></dd>
+                            <dt>Passes</dt><dd class="js-sweep-passes-left"></dd>
+                        </dl>
                     </div>
                     <div class="strip">
-                        <div class="strip-name">Right strip</div>
+                        <div class="strip-name">Right strip, W on controller 2</div>
                         <div class="strip-bar js-strip-right"></div>
+                        <dl class="sweep-values">
+                            <dt>Status</dt><dd class="js-sweep-status-right"></dd>
+                            <dt>Colour</dt><dd class="js-sweep-color-right"></dd>
+                            <dt>Next LED</dt><dd class="js-sweep-index-right"></dd>
+                            <dt>Passes</dt><dd class="js-sweep-passes-right"></dd>
+                        </dl>
                     </div>
-                    <dl class="sweep-values">
-                        <dt>Status</dt><dd class="js-sweep-status"></dd>
-                        <dt>Colour</dt><dd class="js-sweep-color"></dd>
-                        <dt>Next LED</dt><dd class="js-sweep-index"></dd>
-                        <dt>Passes</dt><dd class="js-sweep-passes"></dd>
-                    </dl>
-                    <p class="panel-note">The bars mirror what the strips should show. Releasing W pauses, holding it again resumes where it stopped.</p>
+                    <p class="panel-note">The bars mirror what the strips should show. Releasing W pauses its strip, holding it again resumes where it stopped. If the other strip lights instead, the strips are swapped on the board.</p>
                 </section>
             </div>
         </main>
