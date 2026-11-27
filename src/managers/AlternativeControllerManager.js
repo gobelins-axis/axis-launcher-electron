@@ -28,7 +28,7 @@ const STATE_CLOSED = 'closed';
  *
  * A board is not identified by its USB ids but by a handshake. When the
  * watcher reports a new port, it is opened and pinged; the board has
- * HANDSHAKE_TIMEOUT to answer `type:ready__controller:<name>__version:<n>`.
+ * HANDSHAKE_TIMEOUT to answer `type:ready__controller:<name>`.
  * Boards that stay silent are closed and ignored until unplugged, so the
  * launcher never keeps hold of a device plugged in for another reason (an
  * Arduino IDE upload keeps working).
@@ -38,12 +38,12 @@ const STATE_CLOSED = 'closed';
  * page as is, so a game and its controller agree on the fields between them.
  *
  * IPC (main -> renderer):
- *   alternative:connected     { slot, name, version, path }
+ *   alternative:connected     { slot, name, path }
  *   alternative:disconnected  { slot, name, path }
  *   alternative:message       { slot, name, data }   data = fields minus `type`, plus `controller` (the name)
  *   alternative:raw           { path, line }         every line, for the debug page
  * IPC (renderer -> main):
- *   alternative:list          invoke -> [{ path, state, slot, name, version, ...usb ids }]
+ *   alternative:list          invoke -> [{ path, state, slot, name, ...usb ids }]
  */
 class AlternativeControllerManager {
     constructor(options = {}) {
@@ -101,7 +101,6 @@ class AlternativeControllerManager {
             state: STATE_HANDSHAKING,
             slot: null,
             name: null,
-            version: null,
             port: null,
             parser: null,
             timeout: null,
@@ -132,7 +131,6 @@ class AlternativeControllerManager {
         entry.state = STATE_CONNECTED;
         entry.slot = this._freeSlot();
         entry.name = data.controller || entry.descriptor.manufacturer || 'unknown';
-        entry.version = data.version || null;
 
         console.log(`✅ Alternative controller "${entry.name}" connected on ${entry.path} as slot ${entry.slot}`);
         this._send('alternative:connected', describe(entry));
@@ -240,7 +238,6 @@ function describe(entry) {
         state: entry.state,
         slot: entry.slot,
         name: entry.name,
-        version: entry.version,
         vendorId,
         productId,
         serialNumber,

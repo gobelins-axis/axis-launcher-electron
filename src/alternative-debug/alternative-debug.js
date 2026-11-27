@@ -54,7 +54,7 @@ function render() {
             <div class="device-slot">${device.slot || '·'}</div>
             <div>
                 <div class="device-name">${escape(device.name || device.path)}<span class="device-state">${device.state}</span></div>
-                <div class="device-meta">${escape(device.path)}${ids ? ' · ' + escape(ids) : ''}${device.version ? ' · v' + escape(device.version) : ''}</div>
+                <div class="device-meta">${escape(device.path)}${ids ? ' · ' + escape(ids) : ''}</div>
                 ${lastRows ? `<dl class="device-last">${lastRows}</dl>` : ''}
             </div>
         `;
